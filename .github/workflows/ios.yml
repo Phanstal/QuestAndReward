@@ -48,7 +48,9 @@ jobs:
           fi
 
       - name: Build iOS Simulator app
+        shell: bash
         run: |
+          set -o pipefail
           mkdir -p "$GITHUB_WORKSPACE/build/ios-simulator"
 
           xcodebuild build \
@@ -57,11 +59,27 @@ jobs:
             -configuration Debug \
             -sdk iphonesimulator \
             CODE_SIGNING_ALLOWED=NO \
-            CONFIGURATION_BUILD_DIR="$GITHUB_WORKSPACE/build/ios-simulator"
+            CONFIGURATION_BUILD_DIR="$GITHUB_WORKSPACE/build/ios-simulator" \
+            | tee "$GITHUB_WORKSPACE/build/xcodebuild.log"
+
+      - name: Package Simulator app
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            "$GITHUB_WORKSPACE/build/ios-simulator/QuestAndReward.app" \
+            "$GITHUB_WORKSPACE/build/QuestAndReward-iOS-Simulator.zip"
+          shasum -a 256 "$GITHUB_WORKSPACE/build/QuestAndReward-iOS-Simulator.zip"
 
       - name: Upload Simulator app
         uses: actions/upload-artifact@v4
         with:
           name: QuestAndReward-iOS-Simulator
-          path: build/ios-simulator/QuestAndReward.app
+          path: build/QuestAndReward-iOS-Simulator.zip
           if-no-files-found: error
+
+      - name: Upload Xcode diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuestAndReward-Xcode-Diagnostics
+          path: build/xcodebuild.log
+          if-no-files-found: ignore

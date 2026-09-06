@@ -205,6 +205,7 @@
                     QuestAndReward,
                 );
                 PRODUCT_BUNDLE_IDENTIFIER = com.phanstal.questandreward;
+                PRODUCT_MODULE_NAME = QuestAndRewardIOS;
                 PRODUCT_NAME = "$(TARGET_NAME)";
                 SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
                 SUPPORTS_MACCATALYST = NO;
@@ -235,6 +236,7 @@
                     QuestAndReward,
                 );
                 PRODUCT_BUNDLE_IDENTIFIER = com.phanstal.questandreward;
+                PRODUCT_MODULE_NAME = QuestAndRewardIOS;
                 PRODUCT_NAME = "$(TARGET_NAME)";
                 SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
                 SUPPORTS_MACCATALYST = NO;
@@ -267,4 +269,3 @@
     };
     rootObject = A50000000000000000000002 /* Project object */;
 }
-
