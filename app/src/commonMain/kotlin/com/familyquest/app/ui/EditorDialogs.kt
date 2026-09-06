@@ -450,7 +450,7 @@ private fun TimeDrum(
     testTagPrefix: String,
     onValueChange: (Int) -> Unit,
 ) {
-    val previous = Math.floorMod(value - step, cycleSize)
+    val previous = ((value - step) % cycleSize + cycleSize) % cycleSize
     val next = (value + step) % cycleSize
     Column(
         modifier = Modifier.width(56.dp),

@@ -14,6 +14,9 @@ import com.familyquest.app.ui.FamilyQuestScreen
 import com.familyquest.app.ui.FirstRunExperience
 import com.familyquest.app.ui.theme.FamilyQuestTheme
 import com.familyquest.data.createIosRepository
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
+import platform.Foundation.NSData
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSString
@@ -76,12 +79,10 @@ private class IosDocumentsBackupActions : BackupActions {
         onFailure: () -> Unit,
     ) {
         val path = "$documentsPath/$fileName"
-        val success = NSString.create(string = content).writeToFile(
-            path = path,
-            atomically = true,
-            encoding = NSUTF8StringEncoding,
-            error = null,
-        )
+        val bytes = content.encodeToByteArray()
+        val success = bytes.usePinned { pinned ->
+            NSData.create(bytes = pinned.addressOf(0), length = bytes.size.toULong())
+        }.writeToFile(path, atomically = true)
         if (success) onSuccess() else onFailure()
     }
 
