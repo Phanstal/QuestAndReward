@@ -69,7 +69,7 @@ app/build/outputs/apk/debug/app-debug.apk
 
 iOS 需要 macOS、Xcode 16.x 和 JDK 17。打开 `iosApp/iosApp.xcodeproj`，为 `QuestAndReward` target 选择 Apple Developer Team 后即可运行模拟器或真机；Xcode Build Phase 会自动构建并链接共享 Kotlin framework。
 
-完整的环境安装、共享测试、模拟器运行、真机签名、archive 和 IPA 导出步骤见 [`docs/macos-ios-build-guide.md`](docs/macos-ios-build-guide.md)。Windows 不能运行 Kotlin/Native Apple 链接器或 Xcode，因此 Android 构建通过不等于 iOS 已完成编译验收。
+完整的环境安装、共享测试、模拟器运行、真机签名、archive 和 IPA 导出步骤见 [`docs/macos-ios-build-guide.md`](docs/macos-ios-build-guide.md)。Windows 不能运行 Kotlin/Native Apple 链接器或 Xcode；仓库通过 GitHub Actions 的 macOS runner 执行无签名 Simulator 构建和测试，真机或 App Store 包仍需 Apple Developer 签名环境。
 
 ## v0.54 验证状态
 
@@ -77,7 +77,7 @@ iOS 需要 macOS、Xcode 16.x 和 JDK 17。打开 `iosApp/iosApp.xcodeproj`，�
 
 最终 APK 已安装到 x86_64 模拟器 `habitica_test_api33` 并冷启动成功。UI 层级确认应用名为 QuestAndReward，Landing 的 `Level Up Your Life` 为单个单行文本节点；应用进程保持运行，Android crash buffer 为空。
 
-当前工作机是 Windows，尚不能执行 `iosSimulatorArm64Test`、`xcodebuild`、iOS Simulator 或签名 archive。iOS target 的最终编译与签名必须按 macOS 指南执行后再声明通过。
+GitHub Actions 运行 [`34014200128`](https://github.com/Phanstal/QuestAndReward/actions/runs/34014200128) 已在 macOS 15 / Xcode 16.4 上通过 Kotlin Multiplatform iOS 测试和 Xcode Simulator 构建，并通过 Info.plist 断言后上传产物。产物是同时包含 `x86_64` 与 `arm64` 的未签名 Simulator `.app` ZIP，不是可安装到真机或提交 App Store 的 IPA。
 
 Android Debug APK 信息：
 
@@ -89,8 +89,23 @@ versionCode=18
 minSdk=26
 targetSdk=33
 size=28119037 bytes
-SHA-256=F19A1F9F3F1014C302ABB507087754E6BF094E910562F6152B7493F322E4B3D4
+SHA-256=44647F071175BA28168BCE2B8C2B03C18E7DB0ABA0AFD107BE0015965F42D304
 signature=APK Signature Scheme v2 verified
+```
+
+iOS Simulator ZIP 信息：
+
+```text
+release asset=QuestAndReward-v0.54-ios-simulator.zip
+CFBundleIdentifier=com.phanstal.questandreward
+CFBundleShortVersionString=0.54
+CFBundleVersion=18
+CFBundleExecutable=QuestAndReward
+CFBundlePackageType=APPL
+architectures=x86_64, arm64
+size=42176328 bytes
+SHA-256=9CEA8067A0CCDD4EB798D84C31CD61C75375582E6D83FA4F8BEFA7A530780A03
+signing=unsigned iOS Simulator app (not IPA)
 ```
 
 门禁命令为：
