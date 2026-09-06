@@ -37,7 +37,7 @@ object TaskScheduleRules {
                 if (weekDays.any { it !in FIRST_WEEK_DAY..LAST_WEEK_DAY }) return null
                 NormalizedTaskSchedule(
                     deadlineMinutes = deadlineMinutes,
-                    weekDays = (weekDays.ifEmpty { DEFAULT_WEEK_DAYS }).toSortedSet(),
+                    weekDays = (weekDays.ifEmpty { DEFAULT_WEEK_DAYS }).sorted().toSet(),
                     monthDay = null,
                 )
             }
