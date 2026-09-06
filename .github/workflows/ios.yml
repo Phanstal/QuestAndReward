@@ -64,8 +64,18 @@ jobs:
 
       - name: Package Simulator app
         run: |
+          app="$GITHUB_WORKSPACE/build/ios-simulator/QuestAndReward.app"
+          plist="$app/Info.plist"
+
+          plutil -lint "$plist"
+          test "$(plutil -extract CFBundleIdentifier raw "$plist")" = "com.phanstal.questandreward"
+          test "$(plutil -extract CFBundleShortVersionString raw "$plist")" = "0.54"
+          test "$(plutil -extract CFBundleVersion raw "$plist")" = "18"
+          test "$(plutil -extract CFBundleExecutable raw "$plist")" = "QuestAndReward"
+          test "$(plutil -extract CFBundlePackageType raw "$plist")" = "APPL"
+
           ditto -c -k --sequesterRsrc --keepParent \
-            "$GITHUB_WORKSPACE/build/ios-simulator/QuestAndReward.app" \
+            "$app" \
             "$GITHUB_WORKSPACE/build/QuestAndReward-iOS-Simulator.zip"
           shasum -a 256 "$GITHUB_WORKSPACE/build/QuestAndReward-iOS-Simulator.zip"
 
