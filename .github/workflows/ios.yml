@@ -1,0 +1,67 @@
+name: iOS Build and Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    name: iOS Simulator
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Configure Gradle
+        run: chmod +x gradlew
+
+      - name: Show environment
+        run: |
+          java -version
+          xcodebuild -version
+          uname -m
+
+      - name: Run Kotlin Multiplatform tests
+        shell: bash
+        run: |
+          if [[ "$(uname -m)" == "arm64" ]]; then
+            ./gradlew iosSimulatorArm64Test --stacktrace
+          else
+            ./gradlew iosX64Test --stacktrace
+          fi
+
+      - name: Build iOS Simulator app
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/build/ios-simulator"
+
+          xcodebuild build \
+            -project iosApp/iosApp.xcodeproj \
+            -target QuestAndReward \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            CODE_SIGNING_ALLOWED=NO \
+            CONFIGURATION_BUILD_DIR="$GITHUB_WORKSPACE/build/ios-simulator"
+
+      - name: Upload Simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuestAndReward-iOS-Simulator
+          path: build/ios-simulator/QuestAndReward.app
+          if-no-files-found: error
