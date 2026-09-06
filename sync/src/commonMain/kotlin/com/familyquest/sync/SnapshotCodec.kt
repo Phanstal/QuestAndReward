@@ -36,14 +36,14 @@ class SnapshotCodec : SnapshotExporter, BackupCodec {
 
     override fun encode(archive: BackupArchive): String {
         val content = json.encodeToString(archive.toDocument())
-        require(content.toByteArray(Charsets.UTF_8).size <= MAX_BACKUP_BYTES) {
+        require(content.encodeToByteArray().size <= MAX_BACKUP_BYTES) {
             "Backup exceeds the maximum supported size"
         }
         return content
     }
 
     override fun decode(content: String): BackupArchive {
-        if (content.toByteArray(Charsets.UTF_8).size > MAX_BACKUP_BYTES) throw BackupDecodeException()
+        if (content.encodeToByteArray().size > MAX_BACKUP_BYTES) throw BackupDecodeException()
         try {
             val envelope = json.parseToJsonElement(content).jsonObject
             if (envelope["format"]?.jsonPrimitive?.content != BACKUP_FORMAT) {

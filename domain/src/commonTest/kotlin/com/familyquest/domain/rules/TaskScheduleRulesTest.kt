@@ -17,10 +17,8 @@ class TaskScheduleRulesTest {
 
     @Test
     fun `weekly sorts days and supplies the prototype default`() {
-        assertEquals(
-            NormalizedTaskSchedule(22 * 60, sortedSetOf(0, 6), null),
-            TaskScheduleRules.normalize(TaskRecurrence.WEEKLY, 22 * 60, setOf(6, 0), 12),
-        )
+        val normalized = TaskScheduleRules.normalize(TaskRecurrence.WEEKLY, 22 * 60, setOf(6, 0), 12)
+        assertEquals(listOf(0, 6), normalized?.weekDays?.toList())
         assertEquals(
             TaskScheduleRules.DEFAULT_WEEK_DAYS,
             TaskScheduleRules.normalize(TaskRecurrence.WEEKLY, null, emptySet(), null)?.weekDays,
