@@ -1,6 +1,7 @@
 package com.familyquest.data
 
-import androidx.room.withTransaction
+import androidx.room.immediateTransaction
+import androidx.room.useWriterConnection
 import com.familyquest.data.db.CompletionEntity
 import com.familyquest.data.db.EventEntity
 import com.familyquest.data.db.FamilyQuestDatabase
@@ -107,16 +108,18 @@ class RoomFamilyQuestRepository(
     }
 
     override suspend fun profileDataSnapshot(profileId: String): ProfileDataSnapshot? {
-        return database.withTransaction {
-            if (dao.profile(profileId) == null) return@withTransaction null
-            ProfileDataSnapshot(
-                profileId = profileId,
-                tasks = dao.taskSnapshotRows(profileId).map(TaskEntity::toDomain),
-                completions = dao.completionSnapshotRows(profileId).map(CompletionEntity::toDomain),
-                balance = dao.balance(profileId),
-                progressStats = dao.progressSnapshotRow(profileId).toDomain(),
-                inventory = dao.inventorySnapshotRows(profileId).map(RedemptionEntity::toInventoryItem),
-            )
+        return database.useWriterConnection { transactor ->
+            transactor.immediateTransaction {
+                if (dao.profile(profileId) == null) return@immediateTransaction null
+                ProfileDataSnapshot(
+                    profileId = profileId,
+                    tasks = dao.taskSnapshotRows(profileId).map(TaskEntity::toDomain),
+                    completions = dao.completionSnapshotRows(profileId).map(CompletionEntity::toDomain),
+                    balance = dao.balance(profileId),
+                    progressStats = dao.progressSnapshotRow(profileId).toDomain(),
+                    inventory = dao.inventorySnapshotRows(profileId).map(RedemptionEntity::toInventoryItem),
+                )
+            }
         }
     }
 
@@ -1056,27 +1059,29 @@ class RoomFamilyQuestRepository(
     }
 
     override suspend fun backupArchive(exportedAt: Long): BackupArchive {
-        return database.withTransaction {
-            val rewards = dao.allRewards()
-            val activeRewardIds = rewards.asSequence().filter { it.active }.mapTo(mutableSetOf()) { it.id }
-            val selectedProfileId = mutableSelectedProfileId.value
-            val selectedWishGoal = selectedProfileId?.let { dao.wishGoal(it) }
-            BackupArchive(
-                formatVersion = BackupArchive.CURRENT_FORMAT_VERSION,
-                exportedAt = exportedAt,
-                selectedProfileId = mutableSelectedProfileId.value,
-                wishGoalRewardId = selectedWishGoal?.rewardId?.takeIf { it in activeRewardIds },
-                wishGoalDeposit = selectedWishGoal?.deposit ?: 0,
-                wishGoalLastReminderDate = selectedWishGoal?.lastReminderDate,
-                profiles = dao.allProfiles().map(ProfileEntity::toBackupRecord),
-                tasks = dao.allTasks().map(TaskEntity::toBackupRecord),
-                rewards = rewards.map(RewardEntity::toBackupRecord),
-                completions = dao.allCompletions().map(CompletionEntity::toBackupRecord),
-                ledgerEntries = dao.allLedgerEntries().map(LedgerEntryEntity::toBackupRecord),
-                redemptions = dao.allRedemptions().map(RedemptionEntity::toBackupRecord),
-                events = dao.allEvents().map(EventEntity::toBackupRecord),
-                processedCommands = dao.allProcessedCommands().map(ProcessedCommandEntity::toBackupRecord),
-            )
+        return database.useWriterConnection { transactor ->
+            transactor.immediateTransaction {
+                val rewards = dao.allRewards()
+                val activeRewardIds = rewards.asSequence().filter { it.active }.mapTo(mutableSetOf()) { it.id }
+                val selectedProfileId = mutableSelectedProfileId.value
+                val selectedWishGoal = selectedProfileId?.let { dao.wishGoal(it) }
+                BackupArchive(
+                    formatVersion = BackupArchive.CURRENT_FORMAT_VERSION,
+                    exportedAt = exportedAt,
+                    selectedProfileId = mutableSelectedProfileId.value,
+                    wishGoalRewardId = selectedWishGoal?.rewardId?.takeIf { it in activeRewardIds },
+                    wishGoalDeposit = selectedWishGoal?.deposit ?: 0,
+                    wishGoalLastReminderDate = selectedWishGoal?.lastReminderDate,
+                    profiles = dao.allProfiles().map(ProfileEntity::toBackupRecord),
+                    tasks = dao.allTasks().map(TaskEntity::toBackupRecord),
+                    rewards = rewards.map(RewardEntity::toBackupRecord),
+                    completions = dao.allCompletions().map(CompletionEntity::toBackupRecord),
+                    ledgerEntries = dao.allLedgerEntries().map(LedgerEntryEntity::toBackupRecord),
+                    redemptions = dao.allRedemptions().map(RedemptionEntity::toBackupRecord),
+                    events = dao.allEvents().map(EventEntity::toBackupRecord),
+                    processedCommands = dao.allProcessedCommands().map(ProcessedCommandEntity::toBackupRecord),
+                )
+            }
         }
     }
 
@@ -1157,32 +1162,34 @@ class RoomFamilyQuestRepository(
         block: suspend () -> OperationResult,
     ): OperationResult {
         if (!metadata.isValid()) return invalidInput()
-        return database.withTransaction {
-            val processed = dao.processedCommand(metadata.idempotencyKey)
-            if (processed != null) {
-                return@withTransaction if (processed.operation == operation) {
-                    processed.toOperationResult()
-                } else {
-                    invalidInput()
+        return database.useWriterConnection { transactor ->
+            transactor.immediateTransaction {
+                val processed = dao.processedCommand(metadata.idempotencyKey)
+                if (processed != null) {
+                    return@immediateTransaction if (processed.operation == operation) {
+                        processed.toOperationResult()
+                    } else {
+                        invalidInput()
+                    }
                 }
-            }
 
-            val result = block()
-            dao.insertProcessedCommand(
-                ProcessedCommandEntity(
-                    idempotencyKey = metadata.idempotencyKey,
-                    operation = operation,
-                    traceId = metadata.traceId,
-                    result = when (result) {
-                        OperationResult.Success -> RESULT_SUCCESS
-                        OperationResult.NoChange -> RESULT_NO_CHANGE
-                        is OperationResult.Rejected -> RESULT_REJECTED
-                    },
-                    rejectionReason = (result as? OperationResult.Rejected)?.reason?.name,
-                    processedAt = Clock.System.now().toEpochMilliseconds(),
-                ),
-            )
-            result
+                val result = block()
+                dao.insertProcessedCommand(
+                    ProcessedCommandEntity(
+                        idempotencyKey = metadata.idempotencyKey,
+                        operation = operation,
+                        traceId = metadata.traceId,
+                        result = when (result) {
+                            OperationResult.Success -> RESULT_SUCCESS
+                            OperationResult.NoChange -> RESULT_NO_CHANGE
+                            is OperationResult.Rejected -> RESULT_REJECTED
+                        },
+                        rejectionReason = (result as? OperationResult.Rejected)?.reason?.name,
+                        processedAt = Clock.System.now().toEpochMilliseconds(),
+                    ),
+                )
+                result
+            }
         }
     }
 
