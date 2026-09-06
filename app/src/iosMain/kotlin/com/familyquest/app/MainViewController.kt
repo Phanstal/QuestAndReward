@@ -80,9 +80,14 @@ private class IosDocumentsBackupActions : BackupActions {
     ) {
         val path = "$documentsPath/$fileName"
         val bytes = content.encodeToByteArray()
-        val success = bytes.usePinned { pinned ->
+        val data = bytes.usePinned { pinned ->
             NSData.create(bytes = pinned.addressOf(0), length = bytes.size.toULong())
-        }.writeToFile(path, atomically = true)
+        }
+        val success = NSFileManager.defaultManager.createFileAtPath(
+            path = path,
+            contents = data,
+            attributes = null,
+        )
         if (success) onSuccess() else onFailure()
     }
 
