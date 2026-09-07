@@ -41,6 +41,7 @@
 - 第五轮 `34112344454`：4 项原生测试通过，3 项购买相关测试在 180 秒超时；UI 在付费墙购买后等待 Premium 失败。第六轮 `34112889783`：原生 6/7 通过，包括购买/恢复、过期/退款、pending/失败、价格和交易监听；取消测试超时。UI 同样失败，下载的 xcresult 汇总为 6 passed / 2 failed / 0 skipped，失败截图显示 Processing，无系统弹窗。
 - ✅ 下一轮保留全部断言和 180/600 秒 XCTest 上限，仅让取消测试调用 entitlement 核验而不加载无关商品；UI 购买成功等待由 20 秒改为 90 秒，以覆盖第六轮已观察到的数十秒 StoreKit 延迟。尚不能声明全功能验收通过，也不发布产物。
 - ✅ 补充 UI 定位静态检查：`RewardsContent` 使用 LazyColumn，底部 Add New Reward 不保证已进入可访问性树。购买和重启的 Premium 状态断言改为首屏仅 Premium 可见的 Edit Specialty Coffee；后续仍实际滚动点击 Add New Reward 并创建奖励，不删减功能验收。
+- 第七轮 `34116791196` 和第八轮 `34118805464` 均在分配 runner 前失败，steps 为空。第八轮 GitHub annotation 明确提示：`The job was not started because recent account payments have failed or your spending limit needs to be increased.` 因此 `5a0a29c` / `4c0cd59` 的测试修改尚未获得运行验证。需仓库所有者处理 Settings > Billing & plans 后重跑；未合并 main、未发布 v0.55。
 
 本节只记录实际执行结果，当前不预填通过：
 
@@ -51,7 +52,7 @@
 | Data/Room Android instrumentation | ✅ 本轮 API 33 `habitica_test_api33` 30/30 通过；包含事务迁移标记、取消后备份恢复、默认愿望与已有数据保留。 |
 | App/Compose Android instrumentation | ✅ 最终代码 20/20 通过；包含免费高余额 Coffee 锁定、订阅 UI 状态和 500ms 动画回归。 |
 | Android lintDebug / assembleDebug | ✅ 包含可访问性测试标识的最终代码已通过，Lint XML 无 issue。API 33 覆盖安装和冷启动成功；实际点击通过引导、默认 Coffee 提醒、每日完成 1/1、每周/每月切换、免费 Locked、演示解锁、库存和 Stats，crash buffer 为空且进程存活。 |
-| iOS Kotlin/Native、StoreKit 与 XCUITest | ⏳ 前两轮 Actions 34092124019 / 34094981455 因测试 API 参数错误编译失败，已按 Apple 官方文档修正。第三轮 34097885539 的 Kotlin/Native 和 Swift 编译通过，但应用启动因缺失 Compose 必需的 `CADisableMinimumFrameDurationOnPhone=true` 配置崩溃，导致原生测试宿主退出及首屏 UI 断言失败。已补齐 Info.plist 配置，等待第四轮实测；不计入任何 StoreKit 测试通过数量。 |
+| iOS Kotlin/Native、StoreKit 与 XCUITest | ⏳ 启动配置修复已在第四至六轮生效，KMP 测试通过。最近实际执行的第六轮 xcresult：原生 6/7 通过，取消测试超时，UI 购买状态断言失败，共 6 passed / 2 failed / 0 skipped。后续测试修改已提交；第七、八轮因 GitHub 账户计费/支出上限限制未启动，不能计作测试执行或通过。 |
 | iOS Simulator 产物检查 | ⏳ 未执行；目标为 0.55 (19)、arm64/x86_64 通用未签名 `.app` ZIP |
 | 发布产物签名与 SHA-256 | Android 已验证 0.55 (19)、com.familyquest.app、minSdk 26、targetSdk 33、APK v2 签名有效，28,394,992 bytes。SHA-256：`9B83AC7FCFFBCDCDB721DBA6FEA87F2B91D7D3DAFF8B2411EECAC867766C5241`。iOS ZIP 尚未生成，不发布 Release。 |
 | 真机/App Store archive | 不适用 | 本轮目标是构建和测试；当前 iOS 产物明确为 Simulator `.app`，不是 IPA。真机或 App Store 发布仍需 Apple Developer 账户、证书和 provisioning profile。 |
