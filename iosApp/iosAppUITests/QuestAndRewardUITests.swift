@@ -175,6 +175,7 @@ final class QuestAndRewardUITests: XCTestCase {
 
     private func interact(_ app: XCUIApplication, element: XCUIElement, scroll: Bool) {
         if scroll {
+            dismissKeyboard(app)
             for _ in 0..<8 {
                 if element.exists && element.isHittable { break }
                 app.swipeUp()
@@ -186,17 +187,41 @@ final class QuestAndRewardUITests: XCTestCase {
 
     private func fill(_ app: XCUIApplication, identifier: String, value: String) {
         let field = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-        if !field.isHittable { app.swipeUp() }
+        let next = app.keyboards.buttons["next"]
+        let advancedFocus = next.exists
+        if advancedFocus {
+            next.tap()
+            // The reward description sits between its name and price.
+            if identifier == "reward-cost" && next.exists { next.tap() }
+        } else if !field.isHittable {
+            app.swipeUp()
+        }
         XCTAssertTrue(field.waitForExistence(timeout: 10), app.debugDescription)
         let oldValue = field.value as? String ?? field.label
-        XCTAssertTrue(app.frame.contains(field.frame), app.debugDescription)
-        if field.isHittable {
-            field.tap()
-        } else {
-            // Compose exposes a virtual TextView with no XCTest hit point on iOS.
-            field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        if !advancedFocus {
+            XCTAssertTrue(app.frame.contains(field.frame), app.debugDescription)
+            if field.isHittable {
+                field.tap()
+            } else {
+                // Compose exposes a virtual TextView with no XCTest hit point on iOS.
+                field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            }
         }
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10), app.debugDescription)
         app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count) + value)
+        XCTAssertTrue(field.label == value || field.value as? String == value, app.debugDescription)
+    }
+
+    private func dismissKeyboard(_ app: XCUIApplication) {
+        guard app.keyboards.firstMatch.exists else { return }
+        for _ in 0..<3 {
+            let next = app.keyboards.buttons["next"]
+            if next.exists { next.tap() } else { break }
+        }
+        app.typeText("\n")
+        let hidden = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == false"), object: app.keyboards.firstMatch
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [hidden], timeout: 10), .completed, app.debugDescription)
     }
 }

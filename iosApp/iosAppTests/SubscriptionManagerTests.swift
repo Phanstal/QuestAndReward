@@ -50,7 +50,7 @@ final class SubscriptionManagerTests: XCTestCase {
     }
 
     @MainActor
-    func testExpiredAndRevokedTransactionsDoNotUnlock() async throws {
+    func testExpiredSubscriptionCanBePurchasedAgain() async throws {
         let manager = makeManager()
         NSLog("StoreKit acceptance: loading product before expiration test")
         await manager.refreshStoreState()
@@ -69,6 +69,16 @@ final class SubscriptionManagerTests: XCTestCase {
 
         let transaction = try buyTestProduct()
         NSLog("StoreKit acceptance: repurchase returned")
+        await assertEventually {
+            await manager.refreshEntitlement()
+            return manager.status == .premium
+        }
+    }
+
+    @MainActor
+    func testRevokedTransactionDoesNotUnlock() async throws {
+        let manager = makeManager()
+        let transaction = try buyTestProduct()
         await assertEventually {
             await manager.refreshEntitlement()
             return manager.status == .premium
