@@ -64,7 +64,7 @@ final class QuestAndRewardUITests: XCTestCase {
                 .firstMatch.exists
         )
         app.staticTexts["Start Free Trial"].tap()
-        XCTAssertTrue(app.staticTexts["Add New Reward"].waitForExistence(timeout: 90))
+        assertPremiumStore(app)
         capture("StoreKit premium store")
 
         exercisePremiumFeatures(app)
@@ -81,7 +81,7 @@ final class QuestAndRewardUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.staticTexts["Today's Quests"].waitForExistence(timeout: 20))
         app.staticTexts["Store"].tap()
-        XCTAssertTrue(app.staticTexts["Add New Reward"].waitForExistence(timeout: 20))
+        assertPremiumStore(app)
     }
 
     private func exercisePremiumFeatures(_ app: XCUIApplication) {
@@ -145,6 +145,13 @@ final class QuestAndRewardUITests: XCTestCase {
         tapLabel(app, "Edit Verified Reward", scroll: true)
         tap(app, "🗑️ Delete")
         XCTAssertFalse(app.staticTexts["Edit Reward"].exists)
+    }
+
+    private func assertPremiumStore(_ app: XCUIApplication) {
+        // The add row is lazily composed below the catalog, not a first-screen state signal.
+        let editCoffee = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "Edit Specialty Coffee")).firstMatch
+        XCTAssertTrue(editCoffee.waitForExistence(timeout: 90), app.debugDescription)
     }
 
     private func tap(_ app: XCUIApplication, _ text: String, scroll: Bool = false) {

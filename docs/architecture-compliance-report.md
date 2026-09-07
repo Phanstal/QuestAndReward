@@ -40,6 +40,7 @@
 - ✅ 后续仅修正两个测试 target 的 StoreKit 初始化顺序：先 reset/clear，再设置 disableDialogs，防止自动购买依赖重置前的配置；过期/撤销测试新增不含交易信息的阶段日志。取消运行也上传诊断，业务及架构边界不变。初始化顺序是否为挂起根因仍待新运行验证，不提前宣称修复成功。
 - 第五轮 `34112344454`：4 项原生测试通过，3 项购买相关测试在 180 秒超时；UI 在付费墙购买后等待 Premium 失败。第六轮 `34112889783`：原生 6/7 通过，包括购买/恢复、过期/退款、pending/失败、价格和交易监听；取消测试超时。UI 同样失败，下载的 xcresult 汇总为 6 passed / 2 failed / 0 skipped，失败截图显示 Processing，无系统弹窗。
 - ✅ 下一轮保留全部断言和 180/600 秒 XCTest 上限，仅让取消测试调用 entitlement 核验而不加载无关商品；UI 购买成功等待由 20 秒改为 90 秒，以覆盖第六轮已观察到的数十秒 StoreKit 延迟。尚不能声明全功能验收通过，也不发布产物。
+- ✅ 补充 UI 定位静态检查：`RewardsContent` 使用 LazyColumn，底部 Add New Reward 不保证已进入可访问性树。购买和重启的 Premium 状态断言改为首屏仅 Premium 可见的 Edit Specialty Coffee；后续仍实际滚动点击 Add New Reward 并创建奖励，不删减功能验收。
 
 本节只记录实际执行结果，当前不预填通过：
 
