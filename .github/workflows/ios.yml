@@ -67,6 +67,7 @@ jobs:
           xcrun simctl bootstatus "$simulator_udid" -b
 
       - name: Run StoreKit and iOS UI tests
+        timeout-minutes: 25
         shell: bash
         run: |
           set -o pipefail
@@ -75,6 +76,10 @@ jobs:
             -scheme QuestAndReward \
             -configuration Debug \
             -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 180 \
+            -maximum-test-execution-time-allowance 600 \
             -resultBundlePath "$GITHUB_WORKSPACE/build/QuestAndRewardTests.xcresult" \
             | tee "$GITHUB_WORKSPACE/build/xcode-test.log"
 

@@ -6,6 +6,7 @@ final class QuestAndRewardUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
+        executionTimeAllowance = 600
         session = try SKTestSession(configurationFileNamed: "QuestAndReward")
         session.disableDialogs = true
         session.resetToDefaultState()
