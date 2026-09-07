@@ -8,9 +8,10 @@ final class SubscriptionManagerTests: XCTestCase {
 
     override func setUpWithError() throws {
         session = try SKTestSession(configurationFileNamed: "QuestAndReward")
-        session.disableDialogs = true
         session.resetToDefaultState()
         session.clearTransactions()
+        // Apply overrides after reset so automated purchases never require a dialog.
+        session.disableDialogs = true
     }
 
     override func tearDown() {
@@ -51,20 +52,26 @@ final class SubscriptionManagerTests: XCTestCase {
     @MainActor
     func testExpiredAndRevokedTransactionsDoNotUnlock() async throws {
         let manager = makeManager()
+        NSLog("StoreKit acceptance: loading product before expiration test")
         await manager.refreshStoreState()
+        NSLog("StoreKit acceptance: purchasing before expiration test")
         await manager.purchaseSubscription()
+        NSLog("StoreKit acceptance: purchase returned, expiring subscription")
         XCTAssertEqual(manager.status, .premium)
 
         try session.expireSubscription(productIdentifier: SubscriptionManager.productID)
         await manager.refreshEntitlement()
+        NSLog("StoreKit acceptance: expired entitlement refreshed")
         XCTAssertEqual(manager.status, .free)
 
         let transaction = try buyTestProduct()
+        NSLog("StoreKit acceptance: repurchase returned")
         await manager.refreshEntitlement()
         XCTAssertEqual(manager.status, .premium)
 
         try session.refundTransaction(identifier: transaction.identifier)
         await manager.refreshEntitlement()
+        NSLog("StoreKit acceptance: revoked entitlement refreshed")
         XCTAssertEqual(manager.status, .free)
     }
 

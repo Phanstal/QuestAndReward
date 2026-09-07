@@ -36,6 +36,8 @@
 - ✅ Domain/Application、平台订阅逻辑、Room v8、备份、事件与 Android 源码均未改变；没有新增公共 API 或重复业务实现。
 - 第四轮 `34107978986` 已推送并启动，Kotlin Multiplatform 测试通过；截至本次检查，StoreKit/UI 步骤运行超过 35 分钟仍无最终结果，尚不能判定卡住原因。实时日志浏览器访问被自动审批拦截，不声明任何 StoreKit/UI 断言通过。
 - 本段在下一轮测试之前更新；执行时限的实际效果仍须由后续 CI 验证。
+- 第四轮取消后的日志确认：应用成功启动，`testCancelledPurchaseDoesNotUnlockOrReportSuccess` 和 `testEntitlementRulesRejectUnverifiedExpiredRevokedAndWrongProducts` 两项通过；`testExpiredAndRevokedTransactionsDoNotUnlock` 从 09:58:34 UTC 到取消时 10:35:46 UTC 未结束，UI 测试尚未开始。不是编译耗时。
+- ✅ 后续仅修正两个测试 target 的 StoreKit 初始化顺序：先 reset/clear，再设置 disableDialogs，防止自动购买依赖重置前的配置；过期/撤销测试新增不含交易信息的阶段日志。取消运行也上传诊断，业务及架构边界不变。初始化顺序是否为挂起根因仍待新运行验证，不提前宣称修复成功。
 
 本节只记录实际执行结果，当前不预填通过：
 

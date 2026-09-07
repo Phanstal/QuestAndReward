@@ -8,9 +8,9 @@ final class QuestAndRewardUITests: XCTestCase {
         continueAfterFailure = false
         executionTimeAllowance = 600
         session = try SKTestSession(configurationFileNamed: "QuestAndReward")
-        session.disableDialogs = true
         session.resetToDefaultState()
         session.clearTransactions()
+        session.disableDialogs = true
     }
 
     override func tearDown() {
