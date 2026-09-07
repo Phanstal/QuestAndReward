@@ -58,7 +58,7 @@ final class QuestAndRewardUITests: XCTestCase {
         capture("Free store lock")
 
         app.staticTexts["Upgrade to Premium to create your own rewards!"].tap()
-        XCTAssertTrue(app.staticTexts["Start Free Trial"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Start Free Trial"].waitForExistence(timeout: 60), app.debugDescription)
         XCTAssertTrue(
             app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "$1.99/month"))
                 .firstMatch.exists

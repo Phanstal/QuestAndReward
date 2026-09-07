@@ -35,6 +35,8 @@
 - 已通过 GitHub CLI 确认仓库为 PUBLIC。第九轮 `34126315243` 成功分配 macOS runner，KMP 测试通过，StoreKit 原生测试 7/7 全部通过，包括购买、恢复、取消、过期、撤销、pending、失败、价格与交易监听。
 - UI 已实际通过引导、默认 Coffee 提醒、免费锁定、付费墙购买和 Premium 状态检查，并打开 New Quest 编辑器；失败点是测试使用 TextField 类型查询，但实际界面树中 task-title / task-reward 为 TextView。尚未通过完整 UI 验收，不发布产物。
 - ✅ 下一轮仅调整 XCUITest：按稳定 identifier 查找输入控件，不假设 UIKit 元素类型；读取现值兼容 Compose 的 label。业务代码、分层、Room 和协议均未变化，静态架构门禁继续通过。该修正须实际运行后才能计为验证通过。
+- 第十轮 `34129462279` KMP 通过，原生 6/7 通过：重新购买已返回，但立即读取 entitlement 得到 free，过期/撤销测试失败；UI 等待 Start Free Trial 5 秒失败，尚未到达编辑器，不能宣称输入定位修正已验证。下一轮仅将重新购买后的断言复用有界 10 秒 eventually 检查，每次读取真实 entitlement，不写入模拟权限；不改变生产业务或架构。
+- ✅ UI 核验按钮等待改为 60 秒并在断言失败时将实际可访问性树写入日志，覆盖先前实际观察到的 StoreKit 核验延迟；仍要求出现可开始试用状态。生产 entitlement、金额、事务、数据库与事件保持不变，静态门禁已在下次测试前更新。
 
 ### 第四轮后续静态检查
 

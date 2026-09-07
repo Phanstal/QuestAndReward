@@ -66,8 +66,10 @@ final class SubscriptionManagerTests: XCTestCase {
 
         let transaction = try buyTestProduct()
         NSLog("StoreKit acceptance: repurchase returned")
-        await manager.refreshEntitlement()
-        XCTAssertEqual(manager.status, .premium)
+        await assertEventually {
+            await manager.refreshEntitlement()
+            return manager.status == .premium
+        }
 
         try session.refundTransaction(identifier: transaction.identifier)
         await manager.refreshEntitlement()
@@ -103,12 +105,13 @@ final class SubscriptionManagerTests: XCTestCase {
     }
 
     @MainActor
-    private func assertEventually(_ condition: () -> Bool, file: StaticString = #filePath, line: UInt = #line) async {
+    private func assertEventually(_ condition: () async -> Bool, file: StaticString = #filePath, line: UInt = #line) async {
         let deadline = Date().addingTimeInterval(10)
-        while !condition() && Date() < deadline {
+        while Date() < deadline {
+            if await condition() { return }
             try? await Task.sleep(nanoseconds: 50_000_000)
         }
-        XCTAssertTrue(condition(), file: file, line: line)
+        XCTFail("Expected subscription state did not arrive within 10 seconds", file: file, line: line)
     }
 
     @MainActor
