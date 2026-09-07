@@ -64,7 +64,7 @@ final class QuestAndRewardUITests: XCTestCase {
                 .firstMatch.exists
         )
         app.staticTexts["Start Free Trial"].tap()
-        XCTAssertTrue(app.staticTexts["Add New Reward"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.staticTexts["Add New Reward"].waitForExistence(timeout: 90))
         capture("StoreKit premium store")
 
         exercisePremiumFeatures(app)

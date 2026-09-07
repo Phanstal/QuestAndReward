@@ -114,7 +114,7 @@ final class SubscriptionManagerTests: XCTestCase {
     @MainActor
     func testCancelledPurchaseDoesNotUnlockOrReportSuccess() async {
         let manager = makeManager()
-        await manager.refreshStoreState()
+        await manager.refreshEntitlement()
         await manager.handlePurchaseResult(.userCancelled)
         XCTAssertEqual(manager.status, .free)
         XCTAssertFalse(manager.isBusy)
