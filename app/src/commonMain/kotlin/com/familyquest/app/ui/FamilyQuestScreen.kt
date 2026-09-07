@@ -2,6 +2,8 @@ package com.familyquest.app.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -58,7 +60,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,8 +74,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
@@ -135,6 +139,9 @@ fun FamilyQuestScreen(
     state: MainUiState,
     viewModel: MainViewModel,
     backupActions: BackupActions = UnavailableBackupActions,
+    premiumState: PremiumUiState = PremiumUiState.free(),
+    onPurchasePremium: () -> Unit = {},
+    onRestorePremium: () -> Unit = {},
 ) {
     var section by remember { mutableStateOf(MainSection.TASKS) }
     var selectedRecurrence by remember { mutableStateOf(TaskRecurrence.DAILY) }
@@ -150,13 +157,22 @@ fun FamilyQuestScreen(
     var showReset by remember { mutableStateOf(false) }
     var itemToSell by remember { mutableStateOf<InventoryOption?>(null) }
     var itemToUse by remember { mutableStateOf<InventoryOption?>(null) }
-    var isPremium by rememberSaveable { mutableStateOf(false) }
     var showUpgradePrompt by remember { mutableStateOf(false) }
     var showPaywall by remember { mutableStateOf(false) }
     var showWishGoalReminder by remember { mutableStateOf(false) }
     val today = remember { currentLocalDate() }
+    val isPremium = premiumState.isPremium
 
     LaunchedEffect(viewModel) { viewModel.messages.collect(snackbarHostState::showSnackbar) }
+    LaunchedEffect(premiumState.errorMessage, showPaywall) {
+        snackbarHostState.currentSnackbarData?.dismiss()
+        if (!showPaywall) {
+            premiumState.errorMessage?.let { snackbarHostState.showSnackbar(it) }
+        }
+    }
+    LaunchedEffect(premiumState.isPremium) {
+        if (premiumState.isPremium) showPaywall = false
+    }
     LaunchedEffect(viewModel) {
         viewModel.coinChanges.collect { change ->
             nextCoinPopId += 1
@@ -239,7 +255,7 @@ fun FamilyQuestScreen(
         }
     }
 
-    if (showNewTask || taskEditor != null) {
+    if (isPremium && (showNewTask || taskEditor != null)) {
         TaskEditorDialog(
             task = taskEditor,
             initialRecurrence = newTaskRecurrence,
@@ -269,7 +285,7 @@ fun FamilyQuestScreen(
             },
         )
     }
-    if (showNewReward || rewardEditor != null) {
+    if (isPremium && (showNewReward || rewardEditor != null)) {
         RewardEditorDialog(
             reward = rewardEditor,
             onDismiss = {
@@ -344,11 +360,10 @@ fun FamilyQuestScreen(
     }
     if (showPaywall) {
         PremiumSheet(
+            state = premiumState,
             onDismiss = { showPaywall = false },
-            onUpgrade = {
-                isPremium = true
-                showPaywall = false
-            },
+            onUpgrade = onPurchasePremium,
+            onRestore = onRestorePremium,
         )
     }
 }
@@ -475,6 +490,11 @@ private fun WishGoalCard(
         }
         return
     }
+    val animatedProgress by animateFloatAsState(
+        targetValue = goal.progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = PROGRESS_ANIMATION_MILLIS, easing = FastOutSlowInEasing),
+        label = "wish-goal-progress",
+    )
 
     Column(
         modifier = Modifier
@@ -523,11 +543,15 @@ private fun WishGoalCard(
                 .fillMaxWidth()
                 .height(8.dp)
                 .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.08f)),
+            .background(Color.Black.copy(alpha = 0.08f))
+            .testTag("wish-goal-progress")
+            .semantics {
+                    progressBarRangeInfo = ProgressBarRangeInfo(animatedProgress, 0f..1f)
+                },
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(goal.progress)
+                    .fillMaxWidth(animatedProgress)
                     .height(8.dp)
                     .background(
                         Brush.horizontalGradient(
@@ -626,6 +650,11 @@ private fun RecurrenceTabs(selected: TaskRecurrence, onSelected: (TaskRecurrence
 
 @Composable
 private fun TaskProgress(progress: Float, recurrence: TaskRecurrence) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = PROGRESS_ANIMATION_MILLIS, easing = FastOutSlowInEasing),
+        label = "quest-progress",
+    )
     val colors = when (recurrence) {
         TaskRecurrence.DAILY -> listOf(HealthRed, CoinGold)
         TaskRecurrence.WEEKLY -> listOf(QuestTeal, MagicPurple)
@@ -637,11 +666,15 @@ private fun TaskProgress(progress: Float, recurrence: TaskRecurrence) {
             .fillMaxWidth()
             .height(4.dp)
             .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.08f)),
+            .background(Color.White.copy(alpha = 0.08f))
+            .testTag("quest-progress-${recurrence.name.lowercase()}")
+            .semantics {
+                progressBarRangeInfo = ProgressBarRangeInfo(animatedProgress, 0f..1f)
+            },
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(progress.coerceIn(0f, 1f))
+                .fillMaxWidth(animatedProgress)
                 .height(4.dp)
                 .background(Brush.horizontalGradient(colors)),
         )
@@ -871,7 +904,7 @@ private fun RewardCard(
     onToggleWishGoal: () -> Unit,
 ) {
     val reward = option.reward
-    val canBuy = option.canPurchase
+    val canBuy = isPremium && option.canPurchase
     val shape = RoundedCornerShape(16.dp)
     val rarityColor = when (catalogIndex) {
         0 -> Color(0xFFCD7F32)
@@ -968,6 +1001,7 @@ private fun RewardCard(
                 ) {
                     Text(
                         when {
+                            !isPremium -> "Locked"
                             option.rejectionReason == RejectionReason.OUT_OF_STOCK -> "Sold out"
                             option.rejectionReason == RejectionReason.INSUFFICIENT_BALANCE -> "Not enough"
                             !canBuy -> "Unavailable"
@@ -1497,6 +1531,7 @@ private fun CoinPopBadge(pop: CoinPop, modifier: Modifier = Modifier) {
 }
 
 private const val COIN_POP_DURATION_MILLIS = 1_800
+private const val PROGRESS_ANIMATION_MILLIS = 500
 
 @Composable
 private fun AppNavigation(selected: MainSection, onSelected: (MainSection) -> Unit) {
@@ -1589,7 +1624,12 @@ private fun UpgradePrompt(onDismiss: () -> Unit, onSeePlans: () -> Unit) {
 }
 
 @Composable
-private fun PremiumSheet(onDismiss: () -> Unit, onUpgrade: () -> Unit) {
+private fun PremiumSheet(
+    state: PremiumUiState,
+    onDismiss: () -> Unit,
+    onUpgrade: () -> Unit,
+    onRestore: () -> Unit,
+) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -1667,7 +1707,7 @@ private fun PremiumSheet(onDismiss: () -> Unit, onUpgrade: () -> Unit) {
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        "🎁 7-day free trial, then just $0.99/month",
+                        "🎁 7-day free trial, then ${state.priceLabel}",
                         color = PremiumOrange,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -1676,11 +1716,28 @@ private fun PremiumSheet(onDismiss: () -> Unit, onUpgrade: () -> Unit) {
                 Spacer(Modifier.height(12.dp))
                 Button(
                     onClick = onUpgrade,
+                    enabled = !state.isBusy && state.status != PremiumStatus.CHECKING,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = PremiumOrange),
                     shape = RoundedCornerShape(14.dp),
                 ) {
-                    Text("Start Free Trial", fontWeight = FontWeight.Bold)
+                    Text(
+                        when {
+                            state.status == PremiumStatus.CHECKING -> "Checking Subscription…"
+                            state.isBusy -> "Processing…"
+                            else -> "Start Free Trial"
+                        },
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                state.errorMessage?.let { message ->
+                    Text(message, color = HealthRed, fontSize = 12.sp)
+                }
+                TextButton(
+                    onClick = onRestore,
+                    enabled = !state.isBusy && state.status != PremiumStatus.CHECKING,
+                ) {
+                    Text("Restore Purchases", color = Color.White.copy(alpha = 0.62f))
                 }
                 TextButton(onClick = onDismiss) {
                     Text("No thanks, continue free", color = Color.White.copy(alpha = 0.30f))
@@ -1696,6 +1753,11 @@ private fun WishGoalReminderDialog(
     onDismiss: () -> Unit,
     onCompleteQuests: () -> Unit,
 ) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = goal.progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = PROGRESS_ANIMATION_MILLIS, easing = FastOutSlowInEasing),
+        label = "wish-reminder-progress",
+    )
     val greeting = when (currentLocalHour()) {
         in 0..11 -> "Good morning ☀️"
         in 12..17 -> "Good afternoon 🌤️"
@@ -1774,11 +1836,15 @@ private fun WishGoalReminderDialog(
                         .fillMaxWidth()
                         .height(10.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.08f)),
+                        .background(Color.White.copy(alpha = 0.08f))
+                        .testTag("wish-reminder-progress")
+                        .semantics {
+                            progressBarRangeInfo = ProgressBarRangeInfo(animatedProgress, 0f..1f)
+                        },
                 ) {
                     Box(
                         Modifier
-                            .fillMaxWidth(goal.progress)
+                            .fillMaxWidth(animatedProgress)
                             .height(10.dp)
                             .background(
                                 Brush.horizontalGradient(

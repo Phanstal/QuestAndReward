@@ -71,6 +71,8 @@ class RoomFamilyQuestRepositoryTest {
         )
         assertEquals(3, repository.rewards.first().size)
         assertEquals(120, repository.observeBalance(profile.id).first())
+        assertEquals("seed-reward-coffee", repository.wishGoal.first()?.rewardId)
+        assertEquals(0, repository.wishGoal.first()?.deposit)
         assertTrue(repository.observeInventory(profile.id).first().isEmpty())
         assertEquals(1, tasks.count { it.recurrence == TaskRecurrence.ONCE })
         assertEquals(8 * 60, tasks.single { it.id == "seed-daily-exercise" }.deadlineMinutes)
@@ -497,6 +499,8 @@ class RoomFamilyQuestRepositoryTest {
         repository.addReward("保留奖励", "重置后仍在", 50, null, "🎁", metadata())
         val reward = repository.rewards.first().first { it.name == "保留奖励" }
         repository.redeemReward(reward.id, profileId, metadata())
+        repository.deleteReward("seed-reward-coffee", metadata())
+        assertEquals(null, repository.wishGoal.first())
         val eventsBeforeReset = repository.pendingEvents().size
         val resetMetadata = metadata()
 
@@ -519,6 +523,9 @@ class RoomFamilyQuestRepositoryTest {
         assertTrue(repository.observeCompletions(profileId).first().isEmpty())
         assertTrue(repository.observeInventory(profileId).first().isEmpty())
         assertTrue(repository.rewards.first().any { it.id == reward.id })
+        assertTrue(repository.rewards.first().any { it.id == "seed-reward-coffee" && it.active })
+        assertEquals("seed-reward-coffee", repository.wishGoal.first()?.rewardId)
+        assertEquals(0, repository.wishGoal.first()?.deposit)
         assertTrue(repository.pendingEvents().size > eventsBeforeReset)
 
         val eventsAfterReset = repository.pendingEvents().size
@@ -574,9 +581,8 @@ class RoomFamilyQuestRepositoryTest {
     @Test
     fun wishGoalPersistsAcrossRepositoryRecreationAndClearsWhenRewardIsDeleted() = runTest {
         repository.ensureSeedData(metadata())
-        val rewardId = repository.rewards.first().first().id
+        val rewardId = "seed-reward-coffee"
 
-        assertEquals(OperationResult.Success, repository.setWishGoal(rewardId, metadata()))
         assertEquals(rewardId, repository.wishGoalRewardId.first())
 
         val recreated = RoomFamilyQuestRepository(
@@ -588,6 +594,64 @@ class RoomFamilyQuestRepositoryTest {
         assertEquals(rewardId, recreated.wishGoalRewardId.first())
         assertEquals(OperationResult.Success, recreated.deleteReward(rewardId, metadata()))
         assertEquals(null, recreated.wishGoalRewardId.first())
+    }
+
+    @Test
+    fun v055CatalogMigrationFillsOnlyOneMissingWishAndPreservesExistingGoal() = runTest {
+        repository.ensureSeedData(metadata())
+        val profileId = repository.profiles.first().single().id
+        repository.addReward("Existing Goal", "Keep this selection", 900, null, "🎯", metadata())
+        val existingGoal = repository.rewards.first().single { it.name == "Existing Goal" }
+        repository.setWishGoal(existingGoal.id, metadata())
+        restoreBeforeDefaultWishMigration()
+
+        repository.ensureSeedData(metadata())
+
+        assertEquals(existingGoal.id, repository.wishGoal.first()?.rewardId)
+        assertEquals(profileId, repository.wishGoal.first()?.profileId)
+    }
+
+    @Test
+    fun v055CatalogMigrationDoesNotRecreateCoffeeAfterUserCancelsIt() = runTest {
+        repository.ensureSeedData(metadata())
+        repository.setWishGoal(null, metadata())
+        restoreBeforeDefaultWishMigration()
+
+        repository.ensureSeedData(metadata())
+        assertEquals("seed-reward-coffee", repository.wishGoal.first()?.rewardId)
+
+        assertEquals(OperationResult.Success, repository.setWishGoal(null, metadata()))
+        val archive = repository.backupArchive(exportedAt = 1234)
+        assertEquals(OperationResult.Success, repository.restoreBackup(archive, metadata()))
+        repository.ensureSeedData(metadata())
+        assertEquals(null, repository.wishGoal.first())
+    }
+
+    @Test
+    fun defaultWishMigrationDoesNotRestoreDeletedTasksOrOverwriteRewardEdits() = runTest {
+        repository.ensureSeedData(metadata())
+        repository.setWishGoal(null, metadata())
+        repository.deleteTask("seed-daily-exercise", metadata())
+        restoreBeforeDefaultWishMigration()
+
+        repository.ensureSeedData(metadata())
+
+        val profileId = repository.profiles.first().single().id
+        assertTrue(repository.observeTasks(profileId).first().none { it.id == "seed-daily-exercise" })
+        assertEquals("seed-reward-coffee", repository.wishGoal.first()?.rewardId)
+    }
+
+    private suspend fun restoreBeforeDefaultWishMigration() {
+        val archive = repository.backupArchive(exportedAt = 1234)
+        assertEquals(
+            OperationResult.Success,
+            repository.restoreBackup(
+                archive.copy(processedCommands = archive.processedCommands.filterNot {
+                    it.idempotencyKey == "bootstrap-seed-v2:catalog-v055"
+                }),
+                metadata(),
+            ),
+        )
     }
 
     @Test
@@ -620,7 +684,7 @@ class RoomFamilyQuestRepositoryTest {
         val profileId = repository.profiles.first().single().id
         val rewardId = repository.rewards.first().single { it.name == "Specialty Coffee" }.id
 
-        assertEquals(OperationResult.Success, repository.setWishGoal(rewardId, metadata()))
+        assertEquals(OperationResult.NoChange, repository.setWishGoal(rewardId, metadata()))
         assertEquals(
             OperationResult.Success,
             repository.markWishGoalReminderShown(profileId, "2026-09-03", metadata()),

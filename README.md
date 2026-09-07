@@ -2,14 +2,16 @@
 
 一个同时支持 Android 和 iOS 的本地优先游戏化任务与奖励应用。项目使用 Kotlin Multiplatform、Compose Multiplatform 和 Room KMP，共享业务规则、数据层、ViewModel 与界面；平台工程只保留启动、文件访问和系统偏好适配。
 
-当前开发版本为 `v0.54`（Android `versionCode = 18`，iOS `CURRENT_PROJECT_VERSION = 18`），Room 数据库版本为 `v8`。
+当前开发版本为 `v0.55`（Android `versionCode = 19`，iOS `CURRENT_PROJECT_VERSION = 19`），Room 数据库版本为 `v8`。
 
 ## 当前功能
 
 - 首次启动依次展示品牌欢迎页和四步功能引导，完成后进入主界面
 - Landing 标题 “Level Up Your Life” 固定单行显示，在手机宽度下不会因自动换行破坏视觉层级
 - 主界面以 Figma Make `t=7USLGNgZqfnofwom-1` 为唯一 UI 基准：英文 Quests/Store/Rewards/Stats 导航、紧凑奖励商店和 Premium 升级提示
-- 免费态锁定任务编辑、新增任务、心愿目标和自定义奖励；“Start Free Trial”仅用于当前会话 UI 演示，尚未接入订阅与持久化
+- 免费态锁定任务编辑、新增任务、心愿目标、自定义奖励和 Coffee 购买；即使余额高于价格也不会调用兑换命令
+- iOS 使用 StoreKit 2 核验 `quest_reward_monthly` 的当前 entitlement、交易更新和恢复购买；仅 verified、未撤销、未过期的交易解锁 Premium。月费为 `$1.99/month`，包含 7 天免费试用且无年付
+- Android 保留会话级演示订阅，未接入 Google Play Billing；关闭进程后恢复免费态
 - 任务、商店、物品栏和统计四个 Compose 页面
 - 新增、编辑、删除和完成自定义、每日、每周、每月任务，周期按设备当地时间 04:00 切换
 - 每日和每周任务的截止时间使用 5 分钟步进选择器；每周可选择执行日；每月任务可设置每月完成 `1-8` 次。排期用于记录和展示，不限制任务完成时间
@@ -21,11 +23,13 @@
 - 新增、编辑、软删除和购买奖励；编辑器删除会立即关闭并提交软删除命令，不再增加二次确认
 - 商店前三个目录奖励使用铜、银、金边框，第三个带金色光晕；心愿奖励满足余额时显示 “🎉 Redeem”
 - Rewards 使用固定两列网格；奖励可在深色确认卡中使用，或按原价 70% 出售
-- 奖励购买只受金币余额和奖励剩余库存约束，物品栏没有持有数量或容量限制
+- 奖励购买必须先具备 Premium 权限，再检查金币余额和奖励剩余库存；物品栏没有持有数量或容量限制
 - Stats 展示 Balance、Total Earned、Done Today、All Time、最近完成记录、Quest Harvest Board 和 Wish Savings Board；完成记录不提供 UI 撤销入口
 - Stats 可导入、导出完整 JSON 备份 v3（兼容读取 v2）；选择导入文件后立即进行完整校验与原子恢复，不再显示二次确认
 - 待同步事件 NDJSON 的底层接口继续保留以兼容未来同步，但当前版本已无用户界面入口
-- 全新数据库初始化 3 条英文预置任务与 3 个奖励，初始金币和 Total Earned 均为 120；数据重置恢复预置任务并清除进度
+- 全新数据库初始化 3 条英文预置任务与 3 个奖励，初始金币和 Total Earned 均为 120；Coffee（Specialty Coffee，500 金币）默认成为 Deposit 为 0 的愿望目标
+- v0.55 目录迁移仅在没有愿望时补齐一次 Coffee，不覆盖已有愿望；用户此后主动取消不会在下次启动被重新创建。数据重置会恢复可用的标准 Coffee 愿望并清除进度
+- 任务进度、愿望卡和每日愿望提醒均使用 500ms FastOutSlowIn 缓动，并把显示值限制在 `0..1`
 - Android 与 iOS 共用同一套 Compose 页面、Application Service、周期规则、Room schema 和备份协议
 - Android 使用 Storage Access Framework 选择导入/导出文件；iOS 将备份放在应用 Documents，并导入其中最新的 `quest-backup-*.json`
 
@@ -36,7 +40,7 @@
 - `domain`：共享纯 Kotlin 模型、Repository 契约、事件和业务规则
 - `data`：共享 Room KMP schema、事务和 Repository 实现，以及平台数据库路径/偏好适配
 - `sync`：共享事件、完整备份 JSON 编解码，以及未来同步传输契约
-- `iosApp`：SwiftUI iOS 宿主、Xcode project、Info.plist 和 AppIcon
+- `iosApp`：SwiftUI iOS 宿主、StoreKit 2 平台适配、Xcode project、StoreKit 测试配置、Info.plist 和 AppIcon
 
 主要依赖方向为 `Compose/ViewModel -> Application -> Domain`。`data` 实现 Domain Repository，`sync` 实现事件与备份编解码端口并声明同步传输契约，两者只在 App Composition Root 中装配。当前 App 没有装配 `SyncTransport` 的网络实现。
 
@@ -67,44 +71,42 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ## iOS 构建
 
-iOS 需要 macOS、Xcode 16.x 和 JDK 17。打开 `iosApp/iosApp.xcodeproj`，为 `QuestAndReward` target 选择 Apple Developer Team 后即可运行模拟器或真机；Xcode Build Phase 会自动构建并链接共享 Kotlin framework。
+iOS 需要 macOS、Xcode 16.x 和 JDK 17。打开 `iosApp/iosApp.xcodeproj`，选择共享 `QuestAndReward` scheme 后即可在模拟器使用仓库内的 `QuestAndReward.storekit` 测试购买和恢复；真机运行需为 target 选择 Apple Developer Team。Xcode Build Phase 会自动构建并链接共享 Kotlin framework。
 
 完整的环境安装、共享测试、模拟器运行、真机签名、archive 和 IPA 导出步骤见 [`docs/macos-ios-build-guide.md`](docs/macos-ios-build-guide.md)。Windows 不能运行 Kotlin/Native Apple 链接器或 Xcode；仓库通过 GitHub Actions 的 macOS runner 执行无签名 Simulator 构建和测试，真机或 App Store 包仍需 Apple Developer 签名环境。
 
-## v0.54 验证状态
+## v0.55 验证状态
 
-迁移后的共享代码已在 Windows 上完成 Android Debug/Release 编译。JVM 测试在 Debug 和 Release 两个变体各执行 52 个测试，共 104 次执行，0 失败；API 33 模拟器上的 Data/Room instrumentation 27 个、App/Compose instrumentation 17 个也全部通过。`lintDebug` 为 0 errors、1 个保留 targetSdk 33 的 `OldTargetApi` 提示，`assembleDebug` 成功。
+v0.55 架构静态门禁已经完成；自动化、Android 模拟器和 GitHub Actions iOS Simulator 结果将在实际执行后回填。未回填前不把本节视为构建或发布通过证明。
 
-最终 APK 已安装到 x86_64 模拟器 `habitica_test_api33` 并冷启动成功。UI 层级确认应用名为 QuestAndReward，Landing 的 `Level Up Your Life` 为单个单行文本节点；应用进程保持运行，Android crash buffer 为空。
+iOS CI 会执行 Kotlin/Native 测试、StoreKit 原生测试和 XCUITest，随后分别构建 arm64 与 x86_64 Simulator 应用、合并 Mach-O、安装冷启动并扫描 `QuestAndReward` 崩溃报告。成功后上传的 ZIP 是未签名 Simulator `.app`，不是 IPA。
 
-GitHub Actions 运行 [`34014200128`](https://github.com/Phanstal/QuestAndReward/actions/runs/34014200128) 已在 macOS 15 / Xcode 16.4 上通过 Kotlin Multiplatform iOS 测试和 Xcode Simulator 构建，并通过 Info.plist 断言后上传产物。产物是同时包含 `x86_64` 与 `arm64` 的未签名 Simulator `.app` ZIP，不是可安装到真机或提交 App Store 的 IPA。
-
-Android Debug APK 信息：
+最终 Android Debug APK 信息（测试后回填）：
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 package=com.familyquest.app
-versionName=0.54
-versionCode=18
+versionName=0.55
+versionCode=19
 minSdk=26
 targetSdk=33
-size=28119037 bytes
-SHA-256=44647F071175BA28168BCE2B8C2B03C18E7DB0ABA0AFD107BE0015965F42D304
-signature=APK Signature Scheme v2 verified
+size=pending
+SHA-256=pending
+signature=pending
 ```
 
 iOS Simulator ZIP 信息：
 
 ```text
-release asset=QuestAndReward-v0.54-ios-simulator.zip
+release asset=QuestAndReward-v0.55-ios-simulator.zip
 CFBundleIdentifier=com.phanstal.questandreward
-CFBundleShortVersionString=0.54
-CFBundleVersion=18
+CFBundleShortVersionString=0.55
+CFBundleVersion=19
 CFBundleExecutable=QuestAndReward
 CFBundlePackageType=APPL
 architectures=x86_64, arm64
-size=42176328 bytes
-SHA-256=9CEA8067A0CCDD4EB798D84C31CD61C75375582E6D83FA4F8BEFA7A530780A03
+size=pending
+SHA-256=pending
 signing=unsigned iOS Simulator app (not IPA)
 ```
 
@@ -115,9 +117,9 @@ signing=unsigned iOS Simulator app (not IPA)
 .\gradlew.bat :data:connectedDebugAndroidTest :app:connectedDebugAndroidTest
 ```
 
-## v0.54 数据保存与同步
+## v0.55 数据保存与同步
 
-结论：v0.54 没有自动或双向同步。Android 与 iOS 均采用 **Room/SQLite 本地持久化 + 事务 outbox + 用户手动导入/导出完整备份**，没有连接 NAS、SVN 或其他远端服务。应用不依赖网络，设备上的 Room 数据库仍是唯一运行中事实源。
+结论：v0.55 没有自动或双向同步。Android 与 iOS 均采用 **Room/SQLite 本地持久化 + 事务 outbox + 用户手动导入/导出完整备份**，没有连接 NAS、SVN 或其他远端服务。StoreKit entitlement 仅控制 iOS Premium UI 权限，不进入 Room 业务数据或同步协议；设备上的 Room 数据库仍是唯一业务事实源。
 
 ### 本地写入
 

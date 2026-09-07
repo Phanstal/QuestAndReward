@@ -29,7 +29,10 @@ import platform.UIKit.UIViewController
 private const val APP_UI_PREFERENCES = "app_ui"
 private const val KEY_FIRST_RUN_COMPLETED = "first_run_completed"
 
-fun MainViewController(): UIViewController {
+fun MainViewController(
+    premiumBridge: IosPremiumBridge,
+    premiumRequestHandler: IosPremiumRequestHandler,
+): UIViewController {
     val container = AppContainer { eventPayloadCodec ->
         createIosRepository(eventPayloadCodec)
     }
@@ -39,6 +42,7 @@ fun MainViewController(): UIViewController {
     return ComposeUIViewController {
         val mainViewModel = viewModel { MainViewModel(container.service) }
         val state by mainViewModel.uiState.collectAsStateWithLifecycle()
+        val premiumState by premiumBridge.state.collectAsStateWithLifecycle()
         var firstRunCompleted by remember {
             mutableStateOf(preferences.boolForKey(KEY_FIRST_RUN_COMPLETED))
         }
@@ -49,6 +53,9 @@ fun MainViewController(): UIViewController {
                     state = state,
                     viewModel = mainViewModel,
                     backupActions = backupActions,
+                    premiumState = premiumState,
+                    onPurchasePremium = premiumRequestHandler::purchase,
+                    onRestorePremium = premiumRequestHandler::restorePurchases,
                 )
             } else {
                 FirstRunExperience(

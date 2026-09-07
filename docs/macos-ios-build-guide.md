@@ -98,21 +98,52 @@ xcodebuild build \
 
 该任务根据 Xcode 提供的 `SDK_NAME`、`ARCHS` 和 `CONFIGURATION` 构建静态 `QuestAndReward.framework`，无需手工复制 framework。
 
-## 6. iOS 功能验收
+## 6. StoreKit 2 模拟订阅
+
+仓库已提供 `iosApp/QuestAndReward.storekit`，其中只有一个自动续订产品：
+
+```text
+product id=quest_reward_monthly
+price=$1.99/month
+introductory offer=7 days free
+```
+
+共享 `QuestAndReward` scheme 的 Run Action 已绑定此文件。用 Xcode 打开工程后，可在 Product > Scheme > Edit Scheme > Run > Options 确认 StoreKit Configuration 选中 `QuestAndReward.storekit`。不要在模拟器测试中选择 `None`，否则 `Product.products` 无法加载本地商品。
+
+运行应用并打开 Premium 付费墙，点击 `Start Free Trial`。交易成功后 Premium 应立即解锁；杀掉应用并重启，`Transaction.currentEntitlements` 应恢复权限。点击 `Restore Purchases` 会调用 `AppStore.sync()` 并重新核验，不会读取本地 Boolean。
+
+Xcode 的 Debug > StoreKit > Manage Transactions 可检查、退款或删除测试交易。也可停止应用后使用 Manage Transactions 清空全部交易，再次启动应回到免费态。取消、Ask to Buy pending、失败、未验证、已过期和已撤销交易都不能解锁。
+
+仓库内原生测试使用 `SKTestSession`，无需 App Store Connect 账户：
+
+```bash
+xcodebuild test \
+  -project iosApp/iosApp.xcodeproj \
+  -scheme QuestAndReward \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -resultBundlePath build/QuestAndRewardTests.xcresult
+```
+
+测试包括首次免费、购买、恢复、管理器重建后的 entitlement、过期/退款降级、pending/失败保持锁定，以及首次引导、默认 Coffee、四页导航、免费购买锁定和订阅后重启保持。
+
+真实 App Store 购买还需要在 App Store Connect 创建同一个 `quest_reward_monthly` 自动续订产品，设置月费和 7 天免费试用，并完成 Paid Applications Agreement、税务、银行信息、签名和审核。仓库中的 `.storekit` 文件只服务本地测试，不能代替 App Store Connect 配置。
+
+## 7. iOS 功能验收
 
 模拟器首次启动后按顺序检查：
 
 1. Landing 的 `Level Up Your Life` 保持单行，完成首次引导后进入主界面。
 2. Quests、Store、Rewards、Stats 四页均可切换，编辑抽屉和确认弹窗可操作。
 3. 新增、编辑、完成、软删除任务；每日/每周/每月周期和月度次数行为与 Android 一致。
-4. 购买、使用、出售奖励，心愿 Deposit、兑换和统计更新正确。
-5. 杀掉并重启应用后数据仍存在，说明 Room/SQLite 与 UserDefaults 正常工作。
-6. 在 Finder 或 Files 中确认应用 Documents 可见。`Export Backup` 写入 `quest-backup-*.json`；`Import Data` 导入 Documents 中按文件名排序最新的同名备份。
-7. 在 Xcode Debug navigator 和设备日志中确认没有未捕获异常或数据库迁移失败。
+4. 免费态余额即使高于 Coffee 价格也保持 `Locked`；本地 StoreKit 购买后才可购买、编辑和新增。
+5. 购买、使用、出售奖励，心愿 Deposit、兑换和统计更新正确。
+6. 杀掉并重启应用后 Room 数据仍存在，Premium 由 StoreKit entitlement 恢复。
+7. 在 Finder 或 Files 中确认应用 Documents 可见。`Export Backup` 写入 `quest-backup-*.json`；`Import Data` 导入 Documents 中按文件名排序最新的同名备份。
+8. 在 Xcode Debug navigator 和设备日志中确认没有未捕获异常或数据库迁移失败。
 
 iOS 与 Android 使用相同的 Compose 页面和业务服务，因此无需维护第二套 UI 行为。SwiftUI 的 `ContentView` 仅承载共享 `ComposeUIViewController`。
 
-## 7. 真机与 Release 构建
+## 8. 真机与 Release 构建
 
 连接已信任的 iPhone，在 Xcode 中选择设备并运行一次 Debug。命令行无签名编译可用于排除源码问题：
 
@@ -147,7 +178,7 @@ xcodebuild -exportArchive \
 
 `ExportOptions.plist` 依赖团队、发布渠道和签名方式，不应在没有真实账号配置时编造或提交通用版本。
 
-## 8. Android 同步验证
+## 9. Android 同步验证
 
 在同一提交上执行 Android 门禁，确保跨平台改动没有破坏 APK：
 
@@ -162,7 +193,7 @@ xcodebuild -exportArchive \
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## 9. 常见问题
+## 10. 常见问题
 
 ### Xcode 找不到 QuestAndReward framework
 
@@ -198,6 +229,6 @@ rm -rf .kotlin app/build data/build domain/build application/build sync/build
 
 只删除项目内生成目录，不删除用户主目录中的全局 Gradle 或 Xcode 数据。
 
-## 10. 发布前记录
+## 11. 发布前记录
 
 每次 iOS 发布至少记录：Git commit、`MARKETING_VERSION`、`CURRENT_PROJECT_VERSION`、Xcode 版本、目标 iOS 版本、测试设备、archive 是否成功、导出方式和 IPA SHA-256。macOS 实测结果应回填到 `docs/architecture-compliance-report.md`，不能用 Windows 上的 Android 结果代替。

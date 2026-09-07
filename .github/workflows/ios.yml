@@ -16,7 +16,7 @@ jobs:
   ios:
     name: iOS Simulator
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -45,22 +45,105 @@ jobs:
             ./gradlew iosSimulatorArm64Test --stacktrace
           else
             ./gradlew iosX64Test --stacktrace
-          fi
+           fi
 
-      - name: Build iOS Simulator app
+      - name: Boot iPhone Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/build"
+          simulator_udid="$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name == "iPhone 16")][0].udid')"
+          test -n "$simulator_udid"
+          test "$simulator_udid" != "null"
+          echo "SIMULATOR_UDID=$simulator_udid" >> "$GITHUB_ENV"
+          xcrun simctl boot "$simulator_udid" 2>/dev/null || true
+          xcrun simctl bootstatus "$simulator_udid" -b
+
+      - name: Run StoreKit and iOS UI tests
         shell: bash
         run: |
           set -o pipefail
-          mkdir -p "$GITHUB_WORKSPACE/build/ios-simulator"
+          xcodebuild test \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme QuestAndReward \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -resultBundlePath "$GITHUB_WORKSPACE/build/QuestAndRewardTests.xcresult" \
+            | tee "$GITHUB_WORKSPACE/build/xcode-test.log"
+
+      - name: Build arm64 Simulator app
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/build/ios-arm64"
 
           xcodebuild build \
             -project iosApp/iosApp.xcodeproj \
-            -target QuestAndReward \
+            -scheme QuestAndReward \
             -configuration Debug \
             -sdk iphonesimulator \
+            -arch arm64 \
+            ONLY_ACTIVE_ARCH=YES \
             CODE_SIGNING_ALLOWED=NO \
-            CONFIGURATION_BUILD_DIR="$GITHUB_WORKSPACE/build/ios-simulator" \
-            | tee "$GITHUB_WORKSPACE/build/xcodebuild.log"
+            CONFIGURATION_BUILD_DIR="$GITHUB_WORKSPACE/build/ios-arm64" \
+            | tee "$GITHUB_WORKSPACE/build/xcodebuild-arm64.log"
+
+      - name: Build x86_64 Simulator app
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/build/ios-x86_64"
+
+          xcodebuild build \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme QuestAndReward \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -arch x86_64 \
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO \
+            CONFIGURATION_BUILD_DIR="$GITHUB_WORKSPACE/build/ios-x86_64" \
+            | tee "$GITHUB_WORKSPACE/build/xcodebuild-x86_64.log"
+
+      - name: Create universal Simulator app
+        shell: bash
+        run: |
+          set -euo pipefail
+          arm_app="$GITHUB_WORKSPACE/build/ios-arm64/QuestAndReward.app"
+          x64_app="$GITHUB_WORKSPACE/build/ios-x86_64/QuestAndReward.app"
+          universal_dir="$GITHUB_WORKSPACE/build/ios-simulator"
+          universal_app="$universal_dir/QuestAndReward.app"
+
+          mkdir -p "$universal_dir"
+          ditto "$arm_app" "$universal_app"
+          lipo -create \
+            "$arm_app/QuestAndReward" \
+            "$x64_app/QuestAndReward" \
+            -output "$universal_app/QuestAndReward"
+          lipo -verify_arch arm64 x86_64 "$universal_app/QuestAndReward"
+
+      - name: Install and cold launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          marker="$GITHUB_WORKSPACE/build/ios-cold-launch-start"
+          touch "$marker"
+          xcrun simctl uninstall "$SIMULATOR_UDID" com.phanstal.questandreward 2>/dev/null || true
+          xcrun simctl install "$SIMULATOR_UDID" "$GITHUB_WORKSPACE/build/ios-simulator/QuestAndReward.app"
+          xcrun simctl launch --terminate-running-process "$SIMULATOR_UDID" com.phanstal.questandreward
+          sleep 8
+          xcrun simctl io "$SIMULATOR_UDID" screenshot "$GITHUB_WORKSPACE/build/ios-cold-launch.png"
+
+          crash_file="$(find \
+            "$HOME/Library/Logs/DiagnosticReports" \
+            "$HOME/Library/Developer/CoreSimulator/Devices/$SIMULATOR_UDID/data/Library/Logs/CrashReporter" \
+            -type f \( -name 'QuestAndReward*.ips' -o -name 'QuestAndReward*.crash' \) \
+            -newer "$marker" -print -quit 2>/dev/null || true)"
+          if [[ -n "$crash_file" ]]; then
+            echo "QuestAndReward crash report: $crash_file"
+            cp "$crash_file" "$GITHUB_WORKSPACE/build/"
+            exit 1
+          fi
 
       - name: Package Simulator app
         run: |
@@ -69,21 +152,21 @@ jobs:
 
           plutil -lint "$plist"
           test "$(plutil -extract CFBundleIdentifier raw "$plist")" = "com.phanstal.questandreward"
-          test "$(plutil -extract CFBundleShortVersionString raw "$plist")" = "0.54"
-          test "$(plutil -extract CFBundleVersion raw "$plist")" = "18"
+          test "$(plutil -extract CFBundleShortVersionString raw "$plist")" = "0.55"
+          test "$(plutil -extract CFBundleVersion raw "$plist")" = "19"
           test "$(plutil -extract CFBundleExecutable raw "$plist")" = "QuestAndReward"
           test "$(plutil -extract CFBundlePackageType raw "$plist")" = "APPL"
 
           ditto -c -k --sequesterRsrc --keepParent \
             "$app" \
-            "$GITHUB_WORKSPACE/build/QuestAndReward-iOS-Simulator.zip"
-          shasum -a 256 "$GITHUB_WORKSPACE/build/QuestAndReward-iOS-Simulator.zip"
+            "$GITHUB_WORKSPACE/build/QuestAndReward-v0.55-ios-simulator.zip"
+          shasum -a 256 "$GITHUB_WORKSPACE/build/QuestAndReward-v0.55-ios-simulator.zip"
 
       - name: Upload Simulator app
         uses: actions/upload-artifact@v4
         with:
-          name: QuestAndReward-iOS-Simulator
-          path: build/QuestAndReward-iOS-Simulator.zip
+          name: QuestAndReward-v0.55-iOS-Simulator
+          path: build/QuestAndReward-v0.55-ios-simulator.zip
           if-no-files-found: error
 
       - name: Upload Xcode diagnostics
@@ -91,5 +174,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: QuestAndReward-Xcode-Diagnostics
-          path: build/xcodebuild.log
+          path: |
+            build/*.xcresult
+            build/xcode-test.log
+            build/xcodebuild-*.log
+            build/ios-cold-launch.png
+            build/QuestAndReward*.ips
+            build/QuestAndReward*.crash
           if-no-files-found: ignore

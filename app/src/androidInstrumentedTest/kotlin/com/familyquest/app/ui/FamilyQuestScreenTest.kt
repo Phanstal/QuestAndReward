@@ -1,6 +1,7 @@
 package com.familyquest.app.ui
 
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -50,6 +51,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -58,6 +60,7 @@ import org.junit.runner.RunWith
 class FamilyQuestScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+    private val premiumState = mutableStateOf(PremiumUiState.free())
 
     @Test
     fun taskTabsFilterDailyWeeklyAndMonthlyTasks() {
@@ -119,7 +122,13 @@ class FamilyQuestScreenTest {
         val viewModel = MainViewModel(FamilyQuestService(RecordingUiRepository(), EventExporter { "" }))
         composeRule.setContent {
             FamilyQuestTheme(darkTheme = true) {
-                FamilyQuestScreen(state.value, viewModel)
+                FamilyQuestScreen(
+                    state = state.value,
+                    viewModel = viewModel,
+                    premiumState = premiumState.value,
+                    onPurchasePremium = { premiumState.value = PremiumUiState.premium() },
+                    onRestorePremium = { premiumState.value = PremiumUiState.premium() },
+                )
             }
         }
 
@@ -444,6 +453,93 @@ class FamilyQuestScreenTest {
     }
 
     @Test
+    fun freeUserCannotBuyCoffeeEvenWithMoreThanEnoughCoins() {
+        val repository = RecordingUiRepository()
+        val coffee = Reward(
+            "seed-reward-coffee",
+            "Specialty Coffee",
+            "A perfect brew",
+            500,
+            null,
+            true,
+            0,
+            "☕",
+        )
+        setScreen(
+            MainUiState(
+                rewardOptions = listOf(RewardPurchaseOption(coffee, null)),
+                balance = 5_000,
+                wishGoalRewardId = coffee.id,
+            ),
+            repository,
+        )
+
+        composeRule.onNodeWithText("Store").performClick()
+        composeRule.onNodeWithText("Locked").assertIsDisplayed().assertIsNotEnabled()
+        composeRule.runOnIdle { assertTrue(repository.redeemedRewardIds.isEmpty()) }
+    }
+
+    @Test
+    fun paywallShowsCheckingLocalizedPriceErrorAndRestoreStates() {
+        setScreen(
+            state = MainUiState(),
+            repository = RecordingUiRepository(),
+            initialPremiumState = PremiumUiState(
+                status = PremiumStatus.CHECKING,
+                priceLabel = "US\$1.99/month",
+            ),
+        )
+
+        composeRule.onNodeWithText("Tap to edit & customize quests", substring = true).performClick()
+        composeRule.onNodeWithText("See Plans").performClick()
+        composeRule.onNodeWithText("7-day free trial, then US\$1.99/month", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Checking Subscription…").assertIsNotEnabled()
+        composeRule.onNodeWithText("Restore Purchases").assertIsNotEnabled()
+
+        composeRule.runOnIdle {
+            premiumState.value = PremiumUiState.free().copy(errorMessage = "StoreKit is unavailable.")
+        }
+        composeRule.onNodeWithText("StoreKit is unavailable.").assertIsDisplayed()
+        composeRule.onNodeWithText("Start Free Trial").assertIsEnabled()
+        composeRule.onNodeWithText("Restore Purchases").assertIsEnabled().performClick()
+        composeRule.onAllNodesWithText("Start Free Trial").assertCountEquals(0)
+    }
+
+    @Test
+    fun taskProgressUsesFiveHundredMillisecondEasing() {
+        val state = mutableStateOf(
+            MainUiState(tasks = listOf(task("daily", "Morning Exercise", TaskRecurrence.DAILY))),
+        )
+        val viewModel = MainViewModel(FamilyQuestService(RecordingUiRepository(), EventExporter { "" }))
+        composeRule.mainClock.autoAdvance = false
+        try {
+            composeRule.setContent {
+                FamilyQuestTheme(darkTheme = true) {
+                    FamilyQuestScreen(state.value, viewModel, premiumState = PremiumUiState.free())
+                }
+            }
+            composeRule.waitForIdle()
+            composeRule.runOnIdle {
+                state.value = state.value.copy(
+                    tasks = listOf(task("daily", "Morning Exercise", TaskRecurrence.DAILY, completed = true)),
+                )
+            }
+
+            composeRule.mainClock.advanceTimeBy(250)
+            val middle = composeRule.onNodeWithTag("quest-progress-daily")
+                .fetchSemanticsNode().config[SemanticsProperties.ProgressBarRangeInfo].current
+            assertTrue("Expected an intermediate eased value, was $middle", middle in 0.01f..0.99f)
+
+            composeRule.mainClock.advanceTimeBy(250)
+            val end = composeRule.onNodeWithTag("quest-progress-daily")
+                .fetchSemanticsNode().config[SemanticsProperties.ProgressBarRangeInfo].current
+            assertEquals(1f, end, 0.001f)
+        } finally {
+            composeRule.mainClock.autoAdvance = true
+        }
+    }
+
+    @Test
     fun editorDeleteImmediatelyUsesSoftDeleteCommand() {
         val repository = RecordingUiRepository()
         val reward = Reward("delete-reward", "Delete Reward", "", 50, null, true, 0, "🎁")
@@ -513,11 +609,22 @@ class FamilyQuestScreenTest {
         composeRule.onNodeWithText("Start Free Trial").performClick()
     }
 
-    private fun setScreen(state: MainUiState, repository: FamilyQuestRepository): MainViewModel {
+    private fun setScreen(
+        state: MainUiState,
+        repository: FamilyQuestRepository,
+        initialPremiumState: PremiumUiState = PremiumUiState.free(),
+    ): MainViewModel {
         val viewModel = MainViewModel(FamilyQuestService(repository, EventExporter { "" }))
+        premiumState.value = initialPremiumState
         composeRule.setContent {
             FamilyQuestTheme(darkTheme = true) {
-                FamilyQuestScreen(state, viewModel)
+                FamilyQuestScreen(
+                    state = state,
+                    viewModel = viewModel,
+                    premiumState = premiumState.value,
+                    onPurchasePremium = { premiumState.value = PremiumUiState.premium() },
+                    onRestorePremium = { premiumState.value = PremiumUiState.premium() },
+                )
             }
         }
         return viewModel
@@ -601,6 +708,7 @@ private class RecordingUiRepository : FamilyQuestRepository {
     val revokedCompletionIds = mutableListOf<String>()
     val deletedTaskIds = mutableListOf<String>()
     val deletedRewardIds = mutableListOf<String>()
+    val redeemedRewardIds = mutableListOf<String>()
 
     override fun observeTasks(profileId: String): Flow<List<HabitTask>> = flowOf(emptyList())
     override fun observeBalance(profileId: String): Flow<Int> = flowOf(0)
@@ -693,8 +801,10 @@ private class RecordingUiRepository : FamilyQuestRepository {
         deletedRewardIds += rewardId
         return OperationResult.Success
     }
-    override suspend fun redeemReward(rewardId: String, profileId: String, metadata: CommandMetadata) =
-        OperationResult.Success
+    override suspend fun redeemReward(rewardId: String, profileId: String, metadata: CommandMetadata): OperationResult {
+        redeemedRewardIds += rewardId
+        return OperationResult.Success
+    }
 
     override suspend fun sellInventoryItem(
         itemId: String,

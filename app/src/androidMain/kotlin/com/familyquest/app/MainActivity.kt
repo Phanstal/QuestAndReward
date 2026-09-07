@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.familyquest.app.ui.FamilyQuestScreen
 import com.familyquest.app.ui.FirstRunExperience
+import com.familyquest.app.ui.PremiumUiState
 import com.familyquest.app.ui.rememberAndroidBackupActions
 import com.familyquest.app.ui.theme.FamilyQuestTheme
 
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
                         .getBoolean(KEY_FIRST_RUN_COMPLETED, false),
                 )
             }
+            var demoPremium by rememberSaveable { mutableStateOf(false) }
             FamilyQuestTheme(darkTheme = true) {
                 if (firstRunCompleted) {
                     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -36,6 +38,9 @@ class MainActivity : ComponentActivity() {
                         state = state,
                         viewModel = viewModel,
                         backupActions = backupActions,
+                        premiumState = if (demoPremium) PremiumUiState.premium() else PremiumUiState.free(),
+                        onPurchasePremium = { demoPremium = true },
+                        onRestorePremium = { demoPremium = true },
                     )
                 } else {
                     FirstRunExperience(

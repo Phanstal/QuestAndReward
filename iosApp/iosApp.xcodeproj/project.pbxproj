@@ -10,7 +10,29 @@
         A10000000000000000000001 /* QuestAndRewardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* QuestAndRewardApp.swift */; };
         A10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* ContentView.swift */; };
         A10000000000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* Assets.xcassets */; };
+        A10000000000000000000004 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* SubscriptionManager.swift */; };
+        B10000000000000000000001 /* SubscriptionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* SubscriptionManagerTests.swift */; };
+        B10000000000000000000002 /* QuestAndReward.storekit in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* QuestAndReward.storekit */; };
+        B10000000000000000000003 /* QuestAndRewardUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002 /* QuestAndRewardUITests.swift */; };
+        B10000000000000000000004 /* QuestAndReward.storekit in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* QuestAndReward.storekit */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+        B30000000000000000000001 /* PBXContainerItemProxy */ = {
+            isa = PBXContainerItemProxy;
+            containerPortal = A50000000000000000000002 /* Project object */;
+            proxyType = 1;
+            remoteGlobalIDString = A50000000000000000000001;
+            remoteInfo = QuestAndReward;
+        };
+        B30000000000000000000002 /* PBXContainerItemProxy */ = {
+            isa = PBXContainerItemProxy;
+            containerPortal = A50000000000000000000002 /* Project object */;
+            proxyType = 1;
+            remoteGlobalIDString = A50000000000000000000001;
+            remoteInfo = QuestAndReward;
+        };
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
         A20000000000000000000001 /* QuestAndRewardApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestAndRewardApp.swift; sourceTree = "<group>"; };
@@ -18,10 +40,30 @@
         A20000000000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
         A20000000000000000000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
         A20000000000000000000005 /* QuestAndReward.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuestAndReward.app; sourceTree = BUILT_PRODUCTS_DIR; };
+        A20000000000000000000006 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
+        B20000000000000000000001 /* SubscriptionManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManagerTests.swift; sourceTree = "<group>"; };
+        B20000000000000000000002 /* QuestAndRewardUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestAndRewardUITests.swift; sourceTree = "<group>"; };
+        B20000000000000000000003 /* QuestAndReward.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = QuestAndReward.storekit; sourceTree = "<group>"; };
+        B20000000000000000000004 /* QuestAndRewardTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QuestAndRewardTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+        B20000000000000000000005 /* QuestAndRewardUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QuestAndRewardUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
         A30000000000000000000001 /* Frameworks */ = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        B40000000000000000000001 /* Frameworks */ = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        B40000000000000000000002 /* Frameworks */ = {
             isa = PBXFrameworksBuildPhase;
             buildActionMask = 2147483647;
             files = (
@@ -35,6 +77,9 @@
             isa = PBXGroup;
             children = (
                 A40000000000000000000002 /* iosApp */,
+                B50000000000000000000001 /* iosAppTests */,
+                B50000000000000000000002 /* iosAppUITests */,
+                B20000000000000000000003 /* QuestAndReward.storekit */,
                 A40000000000000000000003 /* Products */,
             );
             sourceTree = "<group>";
@@ -44,6 +89,7 @@
             children = (
                 A20000000000000000000001 /* QuestAndRewardApp.swift */,
                 A20000000000000000000002 /* ContentView.swift */,
+                A20000000000000000000006 /* SubscriptionManager.swift */,
                 A20000000000000000000004 /* Assets.xcassets */,
                 A20000000000000000000003 /* Info.plist */,
             );
@@ -54,8 +100,26 @@
             isa = PBXGroup;
             children = (
                 A20000000000000000000005 /* QuestAndReward.app */,
+                B20000000000000000000004 /* QuestAndRewardTests.xctest */,
+                B20000000000000000000005 /* QuestAndRewardUITests.xctest */,
             );
             name = Products;
+            sourceTree = "<group>";
+        };
+        B50000000000000000000001 /* iosAppTests */ = {
+            isa = PBXGroup;
+            children = (
+                B20000000000000000000001 /* SubscriptionManagerTests.swift */,
+            );
+            path = iosAppTests;
+            sourceTree = "<group>";
+        };
+        B50000000000000000000002 /* iosAppUITests */ = {
+            isa = PBXGroup;
+            children = (
+                B20000000000000000000002 /* QuestAndRewardUITests.swift */,
+            );
+            path = iosAppUITests;
             sourceTree = "<group>";
         };
 /* End PBXGroup section */
@@ -79,6 +143,42 @@
             productReference = A20000000000000000000005 /* QuestAndReward.app */;
             productType = "com.apple.product-type.application";
         };
+        B60000000000000000000001 /* QuestAndRewardTests */ = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = B70000000000000000000001 /* Build configuration list for PBXNativeTarget "QuestAndRewardTests" */;
+            buildPhases = (
+                B80000000000000000000001 /* Sources */,
+                B40000000000000000000001 /* Frameworks */,
+                B90000000000000000000001 /* Resources */,
+            );
+            buildRules = (
+            );
+            dependencies = (
+                BB0000000000000000000001 /* PBXTargetDependency */,
+            );
+            name = QuestAndRewardTests;
+            productName = QuestAndRewardTests;
+            productReference = B20000000000000000000004 /* QuestAndRewardTests.xctest */;
+            productType = "com.apple.product-type.bundle.unit-test";
+        };
+        B60000000000000000000002 /* QuestAndRewardUITests */ = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = B70000000000000000000002 /* Build configuration list for PBXNativeTarget "QuestAndRewardUITests" */;
+            buildPhases = (
+                B80000000000000000000002 /* Sources */,
+                B40000000000000000000002 /* Frameworks */,
+                B90000000000000000000002 /* Resources */,
+            );
+            buildRules = (
+            );
+            dependencies = (
+                BB0000000000000000000002 /* PBXTargetDependency */,
+            );
+            name = QuestAndRewardUITests;
+            productName = QuestAndRewardUITests;
+            productReference = B20000000000000000000005 /* QuestAndRewardUITests.xctest */;
+            productType = "com.apple.product-type.bundle.ui-testing";
+        };
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -91,6 +191,14 @@
                 TargetAttributes = {
                     A50000000000000000000001 = {
                         CreatedOnToolsVersion = 16.0;
+                    };
+                    B60000000000000000000001 = {
+                        CreatedOnToolsVersion = 16.0;
+                        TestTargetID = A50000000000000000000001;
+                    };
+                    B60000000000000000000002 = {
+                        CreatedOnToolsVersion = 16.0;
+                        TestTargetID = A50000000000000000000001;
                     };
                 };
             };
@@ -108,6 +216,8 @@
             projectRoot = "";
             targets = (
                 A50000000000000000000001 /* QuestAndReward */,
+                B60000000000000000000001 /* QuestAndRewardTests */,
+                B60000000000000000000002 /* QuestAndRewardUITests */,
             );
         };
 /* End PBXProject section */
@@ -118,6 +228,22 @@
             buildActionMask = 2147483647;
             files = (
                 A10000000000000000000003 /* Assets.xcassets in Resources */,
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        B90000000000000000000001 /* Resources */ = {
+            isa = PBXResourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+                B10000000000000000000002 /* QuestAndReward.storekit in Resources */,
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        B90000000000000000000002 /* Resources */ = {
+            isa = PBXResourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+                B10000000000000000000004 /* QuestAndReward.storekit in Resources */,
             );
             runOnlyForDeploymentPostprocessing = 0;
         };
@@ -152,16 +278,50 @@
             files = (
                 A10000000000000000000001 /* QuestAndRewardApp.swift in Sources */,
                 A10000000000000000000002 /* ContentView.swift in Sources */,
+                A10000000000000000000004 /* SubscriptionManager.swift in Sources */,
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        B80000000000000000000001 /* Sources */ = {
+            isa = PBXSourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+                B10000000000000000000001 /* SubscriptionManagerTests.swift in Sources */,
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        B80000000000000000000002 /* Sources */ = {
+            isa = PBXSourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+                B10000000000000000000003 /* QuestAndRewardUITests.swift in Sources */,
             );
             runOnlyForDeploymentPostprocessing = 0;
         };
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+        BB0000000000000000000001 /* PBXTargetDependency */ = {
+            isa = PBXTargetDependency;
+            target = A50000000000000000000001 /* QuestAndReward */;
+            targetProxy = B30000000000000000000001 /* PBXContainerItemProxy */;
+        };
+        BB0000000000000000000002 /* PBXTargetDependency */ = {
+            isa = PBXTargetDependency;
+            target = A50000000000000000000001 /* QuestAndReward */;
+            targetProxy = B30000000000000000000002 /* PBXContainerItemProxy */;
+        };
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
         AA0000000000000000000001 /* Debug */ = {
             isa = XCBuildConfiguration;
             buildSettings = {
                 CLANG_ENABLE_MODULES = YES;
+                ENABLE_TESTABILITY = YES;
+                ENABLE_DEBUG_DYLIB = NO;
+                SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+                FRAMEWORK_SEARCH_PATHS = ("$(inherited)", "$(SRCROOT)/../app/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)");
                 ENABLE_USER_SCRIPT_SANDBOXING = NO;
                 IPHONEOS_DEPLOYMENT_TARGET = 15.0;
                 SDKROOT = iphoneos;
@@ -187,7 +347,7 @@
             buildSettings = {
                 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
                 CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 18;
+                CURRENT_PROJECT_VERSION = 19;
                 FRAMEWORK_SEARCH_PATHS = (
                     "$(inherited)",
                     "$(SRCROOT)/../app/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
@@ -198,7 +358,7 @@
                     "$(inherited)",
                     "@executable_path/Frameworks",
                 );
-                MARKETING_VERSION = 0.54;
+                MARKETING_VERSION = 0.55;
                 OTHER_LDFLAGS = (
                     "$(inherited)",
                     "-framework",
@@ -218,7 +378,7 @@
             buildSettings = {
                 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
                 CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 18;
+                CURRENT_PROJECT_VERSION = 19;
                 FRAMEWORK_SEARCH_PATHS = (
                     "$(inherited)",
                     "$(SRCROOT)/../app/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
@@ -229,7 +389,7 @@
                     "$(inherited)",
                     "@executable_path/Frameworks",
                 );
-                MARKETING_VERSION = 0.54;
+                MARKETING_VERSION = 0.55;
                 OTHER_LDFLAGS = (
                     "$(inherited)",
                     "-framework",
@@ -241,6 +401,62 @@
                 SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
                 SUPPORTS_MACCATALYST = NO;
                 TARGETED_DEVICE_FAMILY = 1;
+            };
+            name = Release;
+        };
+        BC0000000000000000000001 /* Debug */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                BUNDLE_LOADER = "$(TEST_HOST)";
+                CODE_SIGN_STYLE = Automatic;
+                GENERATE_INFOPLIST_FILE = YES;
+                IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+                PRODUCT_BUNDLE_IDENTIFIER = com.phanstal.questandreward.tests;
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                SWIFT_VERSION = 5.0;
+                TEST_HOST = "$(BUILT_PRODUCTS_DIR)/QuestAndReward.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/QuestAndReward";
+            };
+            name = Debug;
+        };
+        BC0000000000000000000002 /* Release */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                BUNDLE_LOADER = "$(TEST_HOST)";
+                CODE_SIGN_STYLE = Automatic;
+                GENERATE_INFOPLIST_FILE = YES;
+                IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+                PRODUCT_BUNDLE_IDENTIFIER = com.phanstal.questandreward.tests;
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                SWIFT_VERSION = 5.0;
+                TEST_HOST = "$(BUILT_PRODUCTS_DIR)/QuestAndReward.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/QuestAndReward";
+            };
+            name = Release;
+        };
+        BC0000000000000000000003 /* Debug */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                CODE_SIGN_STYLE = Automatic;
+                GENERATE_INFOPLIST_FILE = YES;
+                IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+                PRODUCT_BUNDLE_IDENTIFIER = com.phanstal.questandreward.uitests;
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                SWIFT_VERSION = 5.0;
+                TARGETED_DEVICE_FAMILY = 1;
+                TEST_TARGET_NAME = QuestAndReward;
+            };
+            name = Debug;
+        };
+        BC0000000000000000000004 /* Release */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                CODE_SIGN_STYLE = Automatic;
+                GENERATE_INFOPLIST_FILE = YES;
+                IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+                PRODUCT_BUNDLE_IDENTIFIER = com.phanstal.questandreward.uitests;
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                SWIFT_VERSION = 5.0;
+                TARGETED_DEVICE_FAMILY = 1;
+                TEST_TARGET_NAME = QuestAndReward;
             };
             name = Release;
         };
@@ -261,6 +477,24 @@
             buildConfigurations = (
                 AA0000000000000000000003 /* Debug */,
                 AA0000000000000000000004 /* Release */,
+            );
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Release;
+        };
+        B70000000000000000000001 /* Build configuration list for PBXNativeTarget "QuestAndRewardTests" */ = {
+            isa = XCConfigurationList;
+            buildConfigurations = (
+                BC0000000000000000000001 /* Debug */,
+                BC0000000000000000000002 /* Release */,
+            );
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Release;
+        };
+        B70000000000000000000002 /* Build configuration list for PBXNativeTarget "QuestAndRewardUITests" */ = {
+            isa = XCConfigurationList;
+            buildConfigurations = (
+                BC0000000000000000000003 /* Debug */,
+                BC0000000000000000000004 /* Release */,
             );
             defaultConfigurationIsVisible = 0;
             defaultConfigurationName = Release;
