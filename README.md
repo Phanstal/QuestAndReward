@@ -1,6 +1,6 @@
 # QuestAndReward
 
-一个同时支持 Android 和 iOS 的本地优先游戏化任务与奖励应用。项目使用 Kotlin Multiplatform、Compose Multiplatform 和 Room KMP，共享业务规则、数据层、ViewModel 与界面；平台工程只保留启动、文件访问和系统偏好适配。
+一个同时支持 Android 和 iOS 的本地优先游戏化任务与奖励应用。项目使用 Kotlin Multiplatform、Compose Multiplatform 和 Room KMP，共享业务规则、数据层、ViewModel 与界面；平台工程负责启动、文件访问、系统偏好与订阅适配。
 
 当前开发版本为 `v0.55`（Android `versionCode = 19`，iOS `CURRENT_PROJECT_VERSION = 19`），Room 数据库版本为 `v8`。
 
@@ -9,7 +9,7 @@
 - 首次启动依次展示品牌欢迎页和四步功能引导，完成后进入主界面
 - Landing 标题 “Level Up Your Life” 固定单行显示，在手机宽度下不会因自动换行破坏视觉层级
 - 主界面以 Figma Make `t=7USLGNgZqfnofwom-1` 为唯一 UI 基准：英文 Quests/Store/Rewards/Stats 导航、紧凑奖励商店和 Premium 升级提示
-- 免费态锁定任务编辑、新增任务、心愿目标、自定义奖励和 Coffee 购买；即使余额高于价格也不会调用兑换命令
+- 免费态可查看默认 Coffee 心愿，锁定任务编辑、新增任务、心愿目标编辑、自定义奖励和 Coffee 购买；即使余额高于价格也不会调用兑换命令
 - iOS 使用 StoreKit 2 核验 `quest_reward_monthly` 的当前 entitlement、交易更新和恢复购买；仅 verified、未撤销、未过期的交易解锁 Premium。月费为 `$1.99/month`，包含 7 天免费试用且无年付
 - Android 保留会话级演示订阅，未接入 Google Play Billing；关闭进程后恢复免费态
 - 任务、商店、物品栏和统计四个 Compose 页面

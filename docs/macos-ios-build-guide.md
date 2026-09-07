@@ -116,6 +116,8 @@ Xcode 的 Debug > StoreKit > Manage Transactions 可检查、退款或删除测�
 
 仓库内原生测试使用 `SKTestSession`，无需 App Store Connect 账户：
 
+测试保持 iOS 15 部署目标，创建测试交易使用 Apple 的 `buyProduct(productIdentifier:)`（iOS 14 起可用），交易标识从 `allTransactions()` 读取；不要改成参数名为 `identifier` 的新异步接口，后者要求 iOS 17。
+
 ```bash
 xcodebuild test \
   -project iosApp/iosApp.xcodeproj \

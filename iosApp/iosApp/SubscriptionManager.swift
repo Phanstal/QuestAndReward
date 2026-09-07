@@ -222,6 +222,10 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
                 try await Task.sleep(nanoseconds: UInt64(min(delay, 31_536_000) * 1_000_000_000))
             } catch { return }
             guard let self else { return }
+            if Date() >= expiration {
+                self.status = .checking
+                self.bridge.setChecking(priceLabel: self.priceLabel)
+            }
             await self.refreshEntitlement()
         }
     }

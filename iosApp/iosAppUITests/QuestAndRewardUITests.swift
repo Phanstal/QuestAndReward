@@ -38,6 +38,7 @@ final class QuestAndRewardUITests: XCTestCase {
                 .firstMatch.waitForExistence(timeout: 20)
         )
         XCTAssertTrue(app.staticTexts["Specialty Coffee"].firstMatch.exists)
+        capture("Default Coffee reminder")
         app.staticTexts["Got it"].tap()
         XCTAssertTrue(app.staticTexts["Today's Quests"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Morning Exercise"].exists)
@@ -49,6 +50,7 @@ final class QuestAndRewardUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Reward Store"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Specialty Coffee"].exists)
         XCTAssertTrue(app.staticTexts["Locked"].exists)
+        capture("Free store lock")
 
         app.staticTexts["Upgrade to Premium to create your own rewards!"].tap()
         XCTAssertTrue(app.staticTexts["Start Free Trial"].waitForExistence(timeout: 5))
@@ -58,6 +60,7 @@ final class QuestAndRewardUITests: XCTestCase {
         )
         app.staticTexts["Start Free Trial"].tap()
         XCTAssertTrue(app.staticTexts["Add New Reward"].waitForExistence(timeout: 20))
+        capture("StoreKit premium store")
 
         exercisePremiumFeatures(app)
 
@@ -82,6 +85,7 @@ final class QuestAndRewardUITests: XCTestCase {
         tap(app, "Set Your First Daily Quest")
         fill(app, identifier: "task-title", value: "Acceptance Quest")
         fill(app, identifier: "task-reward", value: "500")
+        capture("Premium quest editor")
         tap(app, "Add", scroll: true)
         XCTAssertTrue(app.staticTexts["Acceptance Quest"].waitForExistence(timeout: 10))
         tap(app, "Acceptance Quest")
@@ -89,11 +93,13 @@ final class QuestAndRewardUITests: XCTestCase {
         tap(app, "Save", scroll: true)
         tapIdentifier(app, "complete-task-Verified Quest")
         XCTAssertTrue(app.staticTexts["1/2"].waitForExistence(timeout: 10))
+        capture("Quest progress")
 
         tap(app, "Store")
         tapIdentifier(app, "buy-reward-Specialty Coffee")
         tap(app, "Rewards")
         XCTAssertTrue(app.staticTexts["Specialty Coffee"].waitForExistence(timeout: 10))
+        capture("Purchased Coffee inventory")
         tapLabel(app, "Use Specialty Coffee")
         tap(app, "🎉 Confirm Use")
 
@@ -101,6 +107,7 @@ final class QuestAndRewardUITests: XCTestCase {
         tap(app, "Add New Reward", scroll: true)
         fill(app, identifier: "reward-name", value: "Acceptance Reward")
         fill(app, identifier: "reward-cost", value: "10")
+        capture("Premium reward editor")
         tap(app, "Create", scroll: true)
         tapLabel(app, "Edit Acceptance Reward", scroll: true)
         fill(app, identifier: "reward-name", value: "Verified Reward")
@@ -111,12 +118,14 @@ final class QuestAndRewardUITests: XCTestCase {
         tap(app, "Rewards")
         XCTAssertTrue(app.staticTexts["Verified Reward"].waitForExistence(timeout: 10))
         tapLabel(app, "Sell Verified Reward for 7 coins")
+        capture("Sell confirmation")
         tap(app, "Confirm Sell")
 
         tap(app, "Stats")
         tap(app, "📥 Export Backup", scroll: true)
         XCTAssertTrue(app.staticTexts["Backup exported."].waitForExistence(timeout: 10))
         tap(app, "Reset All Data", scroll: true)
+        capture("Reset confirmation")
         tap(app, "⚠️ No, Keep My Data")
         tap(app, "Reset All Data", scroll: true)
         tap(app, "Reset Anyway")
@@ -135,6 +144,13 @@ final class QuestAndRewardUITests: XCTestCase {
 
     private func tap(_ app: XCUIApplication, _ text: String, scroll: Bool = false) {
         interact(app, element: app.staticTexts[text].firstMatch, scroll: scroll)
+    }
+
+    private func capture(_ name: String) {
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     private func tapLabel(_ app: XCUIApplication, _ label: String, scroll: Bool = false) {

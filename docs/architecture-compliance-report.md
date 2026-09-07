@@ -37,11 +37,11 @@
 | Gradle 配置与 Android common 编译 | ✅ 本轮 test、Compose instrumentation、lintDebug、assembleDebug 命令成功结束 |
 | Common/JVM 单元测试 | ✅ Gradle test 成功；未变更的 Domain/Application/Sync 单测任务复用 UP-TO-DATE 结果，不声称全部重新执行 |
 | Data/Room Android instrumentation | ✅ 本轮 API 33 `habitica_test_api33` 30/30 通过；包含事务迁移标记、取消后备份恢复、默认愿望与已有数据保留。 |
-| App/Compose Android instrumentation | ✅ 本轮 20/20 通过；包含免费高余额 Coffee 锁定、订阅 UI 状态和 500ms 动画回归。后续 Data 改动后再执行最终回归。 |
-| Android lintDebug / assembleDebug | ✅ 本轮已通过，Lint XML 无 issue；新增可访问性测试标识后将再次执行最终门禁 |
-| iOS Kotlin/Native、StoreKit 与 XCUITest | ⏳ 未执行；GitHub Actions 将使用 macOS 15 / Xcode 16.4 和 iPhone 16 Simulator |
+| App/Compose Android instrumentation | ✅ 最终代码 20/20 通过；包含免费高余额 Coffee 锁定、订阅 UI 状态和 500ms 动画回归。 |
+| Android lintDebug / assembleDebug | ✅ 包含可访问性测试标识的最终代码已通过，Lint XML 无 issue。API 33 覆盖安装和冷启动成功；实际点击通过引导、默认 Coffee 提醒、每日完成 1/1、每周/每月切换、免费 Locked、演示解锁、库存和 Stats，crash buffer 为空且进程存活。 |
+| iOS Kotlin/Native、StoreKit 与 XCUITest | ⏳ 首轮 Actions 34092124019 的 Kotlin/Native 通过；Swift 测试编译因误选 iOS 17 测试 API 和交易 ID 类型失败。已修正为兼容测试 API，第二轮 Actions 34094981455 验证中，尚未认定功能验收通过。 |
 | iOS Simulator 产物检查 | ⏳ 未执行；目标为 0.55 (19)、arm64/x86_64 通用未签名 `.app` ZIP |
-| 发布产物签名与 SHA-256 | ⏳ 未生成 |
+| 发布产物签名与 SHA-256 | Android 已验证 0.55 (19)、com.familyquest.app、minSdk 26、targetSdk 33、APK v2 签名有效，28,394,992 bytes。SHA-256：`9B83AC7FCFFBCDCDB721DBA6FEA87F2B91D7D3DAFF8B2411EECAC867766C5241`。iOS ZIP 尚未生成，不发布 Release。 |
 | 真机/App Store archive | 不适用 | 本轮目标是构建和测试；当前 iOS 产物明确为 Simulator `.app`，不是 IPA。真机或 App Store 发布仍需 Apple Developer 账户、证书和 provisioning profile。 |
 
 测试前结论：v0.55 的架构边界、可靠 entitlement 设计、迁移兼容和跨平台职责划分全部为 ✅，且没有 Room schema、备份格式、同步协议或 Domain/Application 公共 API 变更。当前仅授权进入测试，不代表 Android/iOS 构建或发布已经通过；这些结论必须在实际门禁完成后回填。

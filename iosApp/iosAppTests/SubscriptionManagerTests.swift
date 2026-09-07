@@ -182,7 +182,7 @@ final class SubscriptionManagerTests: XCTestCase {
 
     @MainActor
     private func buyTestProduct() throws -> SKTestTransaction {
-        try session.buyProduct(identifier: SubscriptionManager.productID)
+        try session.buyProduct(productIdentifier: SubscriptionManager.productID)
         return try XCTUnwrap(session.allTransactions().last)
     }
 

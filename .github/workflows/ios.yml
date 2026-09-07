@@ -176,6 +176,19 @@ jobs:
           path: build/QuestAndReward-v0.55-ios-simulator.zip
           if-no-files-found: error
 
+      - name: Export iOS test evidence
+        if: always()
+        shell: bash
+        run: |
+          if [[ -d "$GITHUB_WORKSPACE/build/QuestAndRewardTests.xcresult" ]]; then
+            xcrun xcresulttool get test-results summary \
+              --path "$GITHUB_WORKSPACE/build/QuestAndRewardTests.xcresult" \
+              > "$GITHUB_WORKSPACE/build/ios-test-summary.json" || true
+            xcrun xcresulttool export attachments \
+              --path "$GITHUB_WORKSPACE/build/QuestAndRewardTests.xcresult" \
+              --output-path "$GITHUB_WORKSPACE/build/ios-test-attachments" || true
+          fi
+
       - name: Upload Xcode diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
@@ -188,7 +201,20 @@ jobs:
             build/ios-cold-launch.png
             build/QuestAndReward*.ips
             build/QuestAndReward*.crash
+            build/ios-test-summary.json
+            build/ios-test-attachments/
           if-no-files-found: ignore
+
+      - name: Upload iOS acceptance evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuestAndReward-iOS-Acceptance
+          path: |
+            build/ios-test-summary.json
+            build/ios-test-attachments/
+            build/ios-cold-launch.png
+          if-no-files-found: error
 
       - name: Save Kotlin Native cache
         if: always() && steps.native-cache.outputs.cache-hit != 'true'
