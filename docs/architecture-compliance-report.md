@@ -30,6 +30,12 @@
 
 ## 测试门禁状态
 
+### 公共仓库恢复验收
+
+- 已通过 GitHub CLI 确认仓库为 PUBLIC。第九轮 `34126315243` 成功分配 macOS runner，KMP 测试通过，StoreKit 原生测试 7/7 全部通过，包括购买、恢复、取消、过期、撤销、pending、失败、价格与交易监听。
+- UI 已实际通过引导、默认 Coffee 提醒、免费锁定、付费墙购买和 Premium 状态检查，并打开 New Quest 编辑器；失败点是测试使用 TextField 类型查询，但实际界面树中 task-title / task-reward 为 TextView。尚未通过完整 UI 验收，不发布产物。
+- ✅ 下一轮仅调整 XCUITest：按稳定 identifier 查找输入控件，不假设 UIKit 元素类型；读取现值兼容 Compose 的 label。业务代码、分层、Room 和协议均未变化，静态架构门禁继续通过。该修正须实际运行后才能计为验证通过。
+
 ### 第四轮后续静态检查
 
 - ✅ 本轮只增加 CI/XCTest 执行时限：单测试默认 180 秒、上限 600 秒，完整 UI 场景允许 600 秒；测试步骤上限 25 分钟，保留后续诊断上传时间。禁用测试并行执行，避免 StoreKit 测试会话互相影响。

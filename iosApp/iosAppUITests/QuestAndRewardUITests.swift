@@ -185,11 +185,11 @@ final class QuestAndRewardUITests: XCTestCase {
     }
 
     private func fill(_ app: XCUIApplication, identifier: String, value: String) {
-        let field = app.textFields[identifier]
+        let field = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
         if !field.isHittable { app.swipeUp() }
         XCTAssertTrue(field.waitForExistence(timeout: 10), app.debugDescription)
         field.tap()
-        let oldValue = field.value as? String ?? ""
+        let oldValue = field.value as? String ?? field.label
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count) + value)
     }
 }
