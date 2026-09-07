@@ -188,8 +188,15 @@ final class QuestAndRewardUITests: XCTestCase {
         let field = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
         if !field.isHittable { app.swipeUp() }
         XCTAssertTrue(field.waitForExistence(timeout: 10), app.debugDescription)
-        field.tap()
         let oldValue = field.value as? String ?? field.label
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count) + value)
+        XCTAssertTrue(app.frame.contains(field.frame), app.debugDescription)
+        if field.isHittable {
+            field.tap()
+        } else {
+            // Compose exposes a virtual TextView with no XCTest hit point on iOS.
+            field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10), app.debugDescription)
+        app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count) + value)
     }
 }

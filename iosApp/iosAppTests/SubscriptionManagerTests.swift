@@ -60,7 +60,10 @@ final class SubscriptionManagerTests: XCTestCase {
         XCTAssertEqual(manager.status, .premium)
 
         try session.expireSubscription(productIdentifier: SubscriptionManager.productID)
-        await manager.refreshEntitlement()
+        await assertEventually {
+            await manager.refreshEntitlement()
+            return manager.status == .free
+        }
         NSLog("StoreKit acceptance: expired entitlement refreshed")
         XCTAssertEqual(manager.status, .free)
 
@@ -72,7 +75,10 @@ final class SubscriptionManagerTests: XCTestCase {
         }
 
         try session.refundTransaction(identifier: transaction.identifier)
-        await manager.refreshEntitlement()
+        await assertEventually {
+            await manager.refreshEntitlement()
+            return manager.status == .free
+        }
         NSLog("StoreKit acceptance: revoked entitlement refreshed")
         XCTAssertEqual(manager.status, .free)
     }

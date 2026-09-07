@@ -139,6 +139,9 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
     func handlePurchaseResult(_ result: Product.PurchaseResult) async {
         switch result {
         case .success(let verification):
+            #if DEBUG
+            NSLog("StoreKit purchase outcome: success; verifying entitlement")
+            #endif
             guard case .verified(let transaction) = verification else {
                 reportError("The App Store could not verify this purchase.")
                 return
@@ -146,8 +149,14 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
             await transaction.finish()
             await refreshEntitlement()
         case .pending:
+            #if DEBUG
+            NSLog("StoreKit purchase outcome: pending")
+            #endif
             reportError("The purchase is pending approval.")
         case .userCancelled:
+            #if DEBUG
+            NSLog("StoreKit purchase outcome: cancelled")
+            #endif
             setBusy(false)
         @unknown default:
             reportError("The purchase could not be completed.")
