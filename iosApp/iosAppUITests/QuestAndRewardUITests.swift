@@ -18,6 +18,10 @@ final class QuestAndRewardUITests: XCTestCase {
             attachment.name = "QuestAndReward failure"
             attachment.lifetime = .keepAlways
             add(attachment)
+            let hierarchy = XCTAttachment(string: XCUIApplication().debugDescription)
+            hierarchy.name = "QuestAndReward accessibility hierarchy"
+            hierarchy.lifetime = .keepAlways
+            add(hierarchy)
         }
         session.clearTransactions()
         session = nil

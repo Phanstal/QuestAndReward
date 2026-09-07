@@ -68,7 +68,7 @@ open iosApp/iosApp.xcodeproj
 1. 勾选 Automatically manage signing。
 2. 选择自己的 Apple Developer Team。
 3. 将 Bundle Identifier `com.phanstal.questandreward` 改为团队名下唯一值；若该标识可用则无需修改。
-4. 确认 Deployment Target 为 iOS 15.0 或更高。
+4. 确认 Deployment Target 为 iOS 15.0 或更高。保留 `Info.plist` 中 `CADisableMinimumFrameDurationOnPhone = YES`；Compose 在 iPhone 启动时检查该项，缺失会导致运行期崩溃。
 
 Apple Team、证书、私钥和 provisioning profile 不应提交到仓库。个人免费 Team 可以安装到已连接设备，但不能发布到 App Store Connect。
 

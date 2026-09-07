@@ -39,7 +39,7 @@
 | Data/Room Android instrumentation | ✅ 本轮 API 33 `habitica_test_api33` 30/30 通过；包含事务迁移标记、取消后备份恢复、默认愿望与已有数据保留。 |
 | App/Compose Android instrumentation | ✅ 最终代码 20/20 通过；包含免费高余额 Coffee 锁定、订阅 UI 状态和 500ms 动画回归。 |
 | Android lintDebug / assembleDebug | ✅ 包含可访问性测试标识的最终代码已通过，Lint XML 无 issue。API 33 覆盖安装和冷启动成功；实际点击通过引导、默认 Coffee 提醒、每日完成 1/1、每周/每月切换、免费 Locked、演示解锁、库存和 Stats，crash buffer 为空且进程存活。 |
-| iOS Kotlin/Native、StoreKit 与 XCUITest | ⏳ 首轮 Actions 34092124019 的 Kotlin/Native 通过；Swift 测试编译因误选 iOS 17 测试 API 和交易 ID 类型失败。已修正为兼容测试 API，第二轮 Actions 34094981455 验证中，尚未认定功能验收通过。 |
+| iOS Kotlin/Native、StoreKit 与 XCUITest | ⏳ 前两轮 Actions 34092124019 / 34094981455 因测试 API 参数错误编译失败，已按 Apple 官方文档修正。第三轮 34097885539 的 Kotlin/Native 和 Swift 编译通过，但应用启动因缺失 Compose 必需的 `CADisableMinimumFrameDurationOnPhone=true` 配置崩溃，导致原生测试宿主退出及首屏 UI 断言失败。已补齐 Info.plist 配置，等待第四轮实测；不计入任何 StoreKit 测试通过数量。 |
 | iOS Simulator 产物检查 | ⏳ 未执行；目标为 0.55 (19)、arm64/x86_64 通用未签名 `.app` ZIP |
 | 发布产物签名与 SHA-256 | Android 已验证 0.55 (19)、com.familyquest.app、minSdk 26、targetSdk 33、APK v2 签名有效，28,394,992 bytes。SHA-256：`9B83AC7FCFFBCDCDB721DBA6FEA87F2B91D7D3DAFF8B2411EECAC867766C5241`。iOS ZIP 尚未生成，不发布 Release。 |
 | 真机/App Store archive | 不适用 | 本轮目标是构建和测试；当前 iOS 产物明确为 Simulator `.app`，不是 IPA。真机或 App Store 发布仍需 Apple Developer 账户、证书和 provisioning profile。 |
