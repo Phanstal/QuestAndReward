@@ -203,6 +203,7 @@ fun RewardEditorDialog(
             value = name,
             onValueChange = { name = it.take(50) },
             label = "Reward name...",
+            modifier = Modifier.testTag("reward-name"),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         )
         DrawerTextField(
@@ -216,6 +217,7 @@ fun RewardEditorDialog(
             value = cost,
             onValueChange = { cost = it.filter(Char::isDigit).take(6) },
             label = "Coin cost...",
+            modifier = Modifier.testTag("reward-cost"),
             prefix = { Text("🪙") },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,

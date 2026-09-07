@@ -762,6 +762,7 @@ private fun TaskCard(
         Box(
             modifier = Modifier
                 .size(48.dp)
+                .testTag("complete-task-${task.title}")
                 .toggleable(
                     value = completed,
                     role = Role.Checkbox,
@@ -990,6 +991,7 @@ private fun RewardCard(
                 )
                 Button(
                     onClick = { onRedeem(reward.id) },
+                    modifier = Modifier.testTag("buy-reward-${reward.name}"),
                     enabled = canBuy,
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                     colors = ButtonDefaults.buttonColors(

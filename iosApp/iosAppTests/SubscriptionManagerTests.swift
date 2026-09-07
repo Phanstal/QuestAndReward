@@ -59,7 +59,7 @@ final class SubscriptionManagerTests: XCTestCase {
         await manager.refreshEntitlement()
         XCTAssertEqual(manager.status, .free)
 
-        let transaction = try await session.buyProduct(identifier: SubscriptionManager.productID)
+        let transaction = try buyTestProduct()
         await manager.refreshEntitlement()
         XCTAssertEqual(manager.status, .premium)
 
@@ -86,9 +86,47 @@ final class SubscriptionManagerTests: XCTestCase {
     }
 
     @MainActor
+    func testTransactionListenerUnlocksAndRevocationDowngradesWithoutRelaunch() async throws {
+        let manager = SubscriptionManager(bridge: IosPremiumBridge())
+        await manager.refreshStoreState()
+        let transaction = try buyTestProduct()
+        await assertEventually { manager.status == .premium }
+        try session.refundTransaction(identifier: transaction.identifier)
+        await assertEventually { manager.status == .free }
+    }
+
+    @MainActor
+    private func assertEventually(_ condition: () -> Bool, file: StaticString = #filePath, line: UInt = #line) async {
+        let deadline = Date().addingTimeInterval(10)
+        while !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 50_000_000)
+        }
+        XCTAssertTrue(condition(), file: file, line: line)
+    }
+
+    @MainActor
+    func testCancelledPurchaseDoesNotUnlockOrReportSuccess() async {
+        let manager = makeManager()
+        await manager.refreshStoreState()
+        await manager.handlePurchaseResult(.userCancelled)
+        XCTAssertEqual(manager.status, .free)
+        XCTAssertFalse(manager.isBusy)
+        XCTAssertNil(manager.errorMessage)
+    }
+
+    @MainActor
     func testEntitlementRulesRejectUnverifiedExpiredRevokedAndWrongProducts() {
         let now = Date(timeIntervalSince1970: 1_000)
         let future = Date(timeIntervalSince1970: 2_000)
+
+        XCTAssertFalse(SubscriptionManager.grantsPremium(
+            productID: SubscriptionManager.productID, isVerified: true,
+            expirationDate: nil, revocationDate: nil, isUpgraded: false, now: now
+        ))
+        XCTAssertFalse(SubscriptionManager.grantsPremium(
+            productID: SubscriptionManager.productID, isVerified: true,
+            expirationDate: future, revocationDate: nil, isUpgraded: true, now: now
+        ))
 
         XCTAssertTrue(
             SubscriptionManager.grantsPremium(
@@ -140,6 +178,12 @@ final class SubscriptionManagerTests: XCTestCase {
                 now: now
             )
         )
+    }
+
+    @MainActor
+    private func buyTestProduct() throws -> SKTestTransaction {
+        try session.buyProduct(identifier: SubscriptionManager.productID)
+        return try XCTUnwrap(session.allTransactions().last)
     }
 
     @MainActor

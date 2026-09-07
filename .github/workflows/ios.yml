@@ -32,6 +32,13 @@ jobs:
       - name: Configure Gradle
         run: chmod +x gradlew
 
+      - name: Restore Kotlin Native cache
+        id: native-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.konan
+          key: konan-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('gradle/libs.versions.toml') }}
+
       - name: Show environment
         run: |
           java -version
@@ -182,3 +189,10 @@ jobs:
             build/QuestAndReward*.ips
             build/QuestAndReward*.crash
           if-no-files-found: ignore
+
+      - name: Save Kotlin Native cache
+        if: always() && steps.native-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.konan
+          key: ${{ steps.native-cache.outputs.cache-primary-key }}

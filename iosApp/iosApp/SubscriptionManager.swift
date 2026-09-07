@@ -42,12 +42,12 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
         expirationTask?.cancel()
     }
 
-    func purchase() {
-        Task { await purchaseSubscription() }
+    nonisolated func purchase() {
+        Task { @MainActor [weak self] in await self?.purchaseSubscription() }
     }
 
-    func restorePurchases() {
-        Task { await restoreSubscription() }
+    nonisolated func restorePurchases() {
+        Task { @MainActor [weak self] in await self?.restoreSubscription() }
     }
 
     func refresh() {
@@ -130,22 +130,26 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
         }
 
         do {
-            switch try await product.purchase() {
-            case .success(let verification):
-                guard case .verified(let transaction) = verification else {
-                    reportError("The App Store could not verify this purchase.")
-                    return
-                }
-                await transaction.finish()
-                await refreshEntitlement()
-            case .pending:
-                reportError("The purchase is pending approval.")
-            case .userCancelled:
-                setBusy(false)
-            @unknown default:
-                reportError("The purchase could not be completed.")
-            }
+            await handlePurchaseResult(try await product.purchase())
         } catch {
+            reportError("The purchase could not be completed.")
+        }
+    }
+
+    func handlePurchaseResult(_ result: Product.PurchaseResult) async {
+        switch result {
+        case .success(let verification):
+            guard case .verified(let transaction) = verification else {
+                reportError("The App Store could not verify this purchase.")
+                return
+            }
+            await transaction.finish()
+            await refreshEntitlement()
+        case .pending:
+            reportError("The purchase is pending approval.")
+        case .userCancelled:
+            setBusy(false)
+        @unknown default:
             reportError("The purchase could not be completed.")
         }
     }

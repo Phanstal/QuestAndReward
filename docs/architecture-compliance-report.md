@@ -34,11 +34,11 @@
 
 | 验证项 | 当前状态 |
 | :--- | :--- |
-| Gradle 配置与 Android common 编译 | ⏳ 未执行；静态门禁完成后执行 |
-| Common/JVM 单元测试 | ⏳ 未执行；静态门禁完成后执行 |
+| Gradle 配置与 Android common 编译 | ✅ 本轮 test、Compose instrumentation、lintDebug、assembleDebug 命令成功结束 |
+| Common/JVM 单元测试 | ✅ Gradle test 成功；未变更的 Domain/Application/Sync 单测任务复用 UP-TO-DATE 结果，不声称全部重新执行 |
 | Data/Room Android instrumentation | ✅ 本轮 API 33 `habitica_test_api33` 30/30 通过；包含事务迁移标记、取消后备份恢复、默认愿望与已有数据保留。 |
 | App/Compose Android instrumentation | ✅ 本轮 20/20 通过；包含免费高余额 Coffee 锁定、订阅 UI 状态和 500ms 动画回归。后续 Data 改动后再执行最终回归。 |
-| Android lintDebug / assembleDebug | ⏳ 未执行 |
+| Android lintDebug / assembleDebug | ✅ 本轮已通过，Lint XML 无 issue；新增可访问性测试标识后将再次执行最终门禁 |
 | iOS Kotlin/Native、StoreKit 与 XCUITest | ⏳ 未执行；GitHub Actions 将使用 macOS 15 / Xcode 16.4 和 iPhone 16 Simulator |
 | iOS Simulator 产物检查 | ⏳ 未执行；目标为 0.55 (19)、arm64/x86_64 通用未签名 `.app` ZIP |
 | 发布产物签名与 SHA-256 | ⏳ 未生成 |
