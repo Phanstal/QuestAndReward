@@ -216,10 +216,15 @@ final class QuestAndRewardUITests: XCTestCase {
             return !keyboard.exists || element.frame.maxY <= keyboard.frame.minY
         }
         if scroll && !isVisible() {
-            dismissKeyboard(app)
+            let editor = app.descendants(matching: .any)["editor-viewport"].firstMatch
+            if !editor.exists { dismissKeyboard(app) }
             for _ in 0..<8 {
                 if isVisible() { break }
-                app.swipeUp()
+                if editor.exists {
+                    scrollEditor(app, toward: element)
+                } else {
+                    app.swipeUp()
+                }
             }
         }
         XCTAssertTrue(element.waitForExistence(timeout: 10), app.debugDescription)
@@ -248,10 +253,7 @@ final class QuestAndRewardUITests: XCTestCase {
                 field.frame.minY >= app.frame.minY && field.frame.maxY < bottom {
                 break
             }
-            let origin = app.coordinate(withNormalizedOffset: .zero)
-            origin.withOffset(CGVector(dx: app.frame.midX, dy: bottom - 30))
-                .press(forDuration: 0.1, thenDragTo:
-                    origin.withOffset(CGVector(dx: app.frame.midX, dy: bottom * 0.4)))
+            scrollEditor(app, toward: field)
         }
         XCTAssertTrue(field.waitForExistence(timeout: 10), app.debugDescription)
         XCTAssertGreaterThanOrEqual(field.frame.height, 48, app.debugDescription)
@@ -282,6 +284,30 @@ final class QuestAndRewardUITests: XCTestCase {
             object: field
         )
         XCTAssertEqual(XCTWaiter.wait(for: [updatedText], timeout: 10), .completed, app.debugDescription)
+    }
+
+    private func scrollEditor(_ app: XCUIApplication, toward element: XCUIElement) {
+        let viewport = app.descendants(matching: .any)["editor-viewport"].firstMatch
+        XCTAssertTrue(viewport.waitForExistence(timeout: 10), app.debugDescription)
+        var bounds = viewport.frame.intersection(app.frame)
+        let keyboard = app.keyboards.firstMatch
+        if keyboard.exists {
+            bounds = bounds.intersection(CGRect(
+                x: app.frame.minX, y: app.frame.minY,
+                width: app.frame.width, height: keyboard.frame.minY - app.frame.minY
+            ))
+        }
+        XCTAssertGreaterThan(bounds.height, 60, app.debugDescription)
+        // Keyboard padding is outside the scroll viewport. Gestures must start
+        // inside this region, not merely somewhere above the system keyboard.
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let upper = origin.withOffset(CGVector(dx: bounds.midX, dy: bounds.minY + bounds.height * 0.2))
+        let lower = origin.withOffset(CGVector(dx: bounds.midX, dy: bounds.minY + bounds.height * 0.8))
+        if element.exists && element.frame.minY < bounds.minY {
+            upper.press(forDuration: 0.1, thenDragTo: lower)
+        } else {
+            lower.press(forDuration: 0.1, thenDragTo: upper)
+        }
     }
 
     private func dismissKeyboard(_ app: XCUIApplication) {

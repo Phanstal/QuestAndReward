@@ -589,6 +589,7 @@ private fun BottomDrawer(
                     .clickable(onClick = {})
                     .background(CardBackground, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                     .imePadding()
+                    .testTag("editor-viewport")
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),

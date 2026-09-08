@@ -16,6 +16,8 @@
 
 ## 追加检查
 
+- 34215391068：StoreKit 9/9 通过（4.827 秒）；UI 在 task-reward 可见高度 13pt 的断言失败。金额框 y=429..442，系统输入栏 y=517，旧滑动起点 y=487 没有按实际抽屉视口定位。✅ 本轮复用 BottomDrawer，只在 IME padding 内侧、滚动区域外侧增加 editor-viewport 标识；XCUITest 的输入和按钮滚动统一限定在其真实 frame 内，并支持向上方目标回滚。未改变页面布局、业务规则、Domain/Application/Room/事件，继续保留 48pt 可见高度、精确输入值和完整业务断言。测试前静态门禁通过，效果待 CI 验证。
+
 - 34192190785：StoreKit 原生 9/9 通过（5.844 秒），UI 创建 500 金币任务成功，重命名后的即时字段断言失败；同一失败日志中 task-title 已为 Verified Quest。✅ 本轮仅让已有 fill 内容断言等待可访问性状态更新，10 秒上限且仍要求精确匹配；不修改生产代码、订阅、业务规则、Room 或事件。静态门禁通过后重新执行 CI；完整 UI 尚未通过。
 
 - 34187777245：KMP 与模拟器启动通过；Swift 编译报 Transaction 同时匹配 StoreKit/SwiftUI，原生与 UI 测试均未执行。✅ 修复仅在平台适配器参数使用 StoreKit.Transaction 全限定类型，无业务、权限规则、数据库或接口变化；静态门禁通过，连同独立 iOS 备份测试进入下一轮验证。
