@@ -191,7 +191,11 @@ final class QuestAndRewardUITests: XCTestCase {
         // the drawer viewport. Reveal it above the keyboard before selecting it.
         for _ in 0..<8 {
             let keyboard = app.keyboards.firstMatch
-            let bottom = keyboard.exists ? keyboard.frame.minY : app.frame.maxY
+            let assistant = app.otherElements["SystemInputAssistantView"]
+            let bottom = min(
+                keyboard.exists ? keyboard.frame.minY : app.frame.maxY,
+                assistant.exists ? assistant.frame.minY : app.frame.maxY
+            )
             if field.exists && field.frame.height >= 48 &&
                 field.frame.minY >= app.frame.minY && field.frame.maxY < bottom {
                 break
@@ -209,6 +213,16 @@ final class QuestAndRewardUITests: XCTestCase {
         }
         field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10), app.debugDescription)
+        let typingIntroduction = app.otherElements["UIContinuousPathIntroductionView"]
+        if typingIntroduction.exists {
+            let continueButton = typingIntroduction.buttons["Continue"]
+            XCTAssertTrue(continueButton.exists, app.debugDescription)
+            continueButton.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            let dismissed = XCTNSPredicateExpectation(
+                predicate: NSPredicate(format: "exists == false"), object: typingIntroduction
+            )
+            XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 10), .completed, app.debugDescription)
+        }
         let oldValue = field.value as? String ?? field.label
         app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count) + value)
         XCTAssertTrue(field.label == value || field.value as? String == value, app.debugDescription)

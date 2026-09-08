@@ -32,6 +32,11 @@
 
 ### 2026-09-08 验收前检查
 
+- 34182374786：KMP 通过、StoreKit 8/8 通过（68.9 秒），UI 仍在金额字段可见性断言失败。完整日志显示系统 UIContinuousPathIntroductionView 含 Continue 按钮覆盖键盘，SystemInputAssistantView 位于 y=516..561，原滚动起点 y=531 落在系统栏内。
+- ✅ 下一轮仅修正测试驱动：首次键盘出现时真实点击系统教学提示 Continue 并确认消失；滚动上界同时排除预测词栏。继续完整字段可见性、输入值和后续业务断言。无生产代码/架构/持久化变化，静态门禁通过；实际效果待 CI。
+
+- ✅ 诊断包下载未完成后，复用现有轻量 evidence artifact：只要生成 test summary，无论测试成败都上传摘要和截图；保留完整 xcresult 诊断包和全部测试门禁。仅 CI 证据可用性调整，应用架构及测试断言不变。
+
 - 34181433617 实际结果：KMP 通过，StoreKit 8/8 通过（96.1 秒），UI Next 点击未报 AX 错误但仍未切换焦点；标题变为 Acceptance Quest500，金额保持 30。金额 TextView 实际只露出 13dp 高度。
 - ✅ 下一轮只修改 XCUITest 输入定位：在键盘上方的抽屉区域滚动，要求目标输入框至少 48pt 高且完整位于键盘上方，再按真实 frame 点击并核对输入值；不依赖 Next 自动切换，不删减金额断言。生产代码、Domain/Application、Room、事件和备份均不变，复用现有 fill 方法，无新公共抽象。该修复尚未验证。
 

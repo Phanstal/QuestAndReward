@@ -211,7 +211,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload iOS acceptance evidence
-        if: success()
+        if: always() && hashFiles('build/ios-test-summary.json') != ''
         uses: actions/upload-artifact@v4
         with:
           name: QuestAndReward-iOS-Acceptance
