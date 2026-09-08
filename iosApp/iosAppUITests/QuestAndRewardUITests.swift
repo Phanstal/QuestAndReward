@@ -174,7 +174,7 @@ final class QuestAndRewardUITests: XCTestCase {
     }
 
     private func interact(_ app: XCUIApplication, element: XCUIElement, scroll: Bool) {
-        if scroll {
+        if scroll && !(element.exists && element.isHittable) {
             dismissKeyboard(app)
             for _ in 0..<8 {
                 if element.exists && element.isHittable { break }

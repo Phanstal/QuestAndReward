@@ -16,7 +16,7 @@
 
 | 项目 | 代码证据 / 实际缺口 | 下一步 |
 | --- | --- | --- |
-| 完整 UI 验收 | 上轮 34141752940 原生 StoreKit 8/8 通过；UI 在键盘 Next 的 XCTest 操作失败，后续场景未运行完 | 5fcd2d3 修复已推送，运行 34181433617 验证；不得省略断言换取通过 |
+| 完整 UI 验收 | 本轮 34181433617、34182374786、34183423412 的 KMP 和 StoreKit 8/8 均通过。最新截图确认系统提示已关闭、金额已获得焦点，但测试未清除默认值而输入成 30500 | 本地已修正读取旧文本及可见按钮直接点击；推送网络失败，尚未验证。不得省略金额和业务断言换取通过 |
 | 试用资格 | FamilyQuestScreen 付费墙固定显示 7-day free trial 和 Start Free Trial；SubscriptionManager 未读取 introductory offer eligibility | 以真实资格显示试用或普通订阅，补充不符合试用资格测试 |
 | 订阅说明和法律链接 | 付费墙已有本地化价格、恢复购买；没有隐私政策、使用条款入口，也没有完整自动续订说明 | 确认真实公开隐私政策地址及适用条款后接入；不能填写占位网址冒充完成 |
 | Privacy manifest | 仓库未发现 PrivacyInfo.xcprivacy；iosMain 使用 NSUserDefaults | 清点应用及最终依赖包 required-reason API，补充适用声明并验证最终 Archive |

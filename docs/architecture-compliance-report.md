@@ -32,6 +32,9 @@
 
 ### 2026-09-08 验收前检查
 
+- 已下载 34183423412 轻量证据，摘要 8 passed / 1 failed / 0 skipped；实际截图显示金额 30500、标题正确、Add 在数字键盘上方完整可见。
+- ✅ 根据截图，只在目标按钮不可点击时执行键盘隐藏/滚动；可见 Add 直接真实点击，不对数字键盘增加非业务必需的隐藏断言。输入清除和此调整仍待推送验证；网络连续连接重置/443 不可达，旧提交误触发的 34184540550 已取消，不计为新测试。
+
 - 34183423412：KMP 与 StoreKit 8/8 通过（99.0 秒）；系统 Continue 已关闭，金额完整显示并获得 Keyboard Focused。UI 输入后金额为 30500：虚拟 TextView.value 为空字符串而 label 为 30，未发送删除键。
 - ✅ 下一轮只修正 fill 使用已观察到的 label 读取旧文本，保留删除键输入和结果断言；不改生产界面、业务、数据库、同步或分层。系统提示与可见性处理已有实际成功证据，完整流程仍未通过。
 
@@ -80,7 +83,7 @@
 | Data/Room Android instrumentation | ✅ 本轮 API 33 `habitica_test_api33` 30/30 通过；包含事务迁移标记、取消后备份恢复、默认愿望与已有数据保留。 |
 | App/Compose Android instrumentation | ✅ 最终代码 20/20 通过；包含免费高余额 Coffee 锁定、订阅 UI 状态和 500ms 动画回归。 |
 | Android lintDebug / assembleDebug | ✅ 包含可访问性测试标识的最终代码已通过，Lint XML 无 issue。API 33 覆盖安装和冷启动成功；实际点击通过引导、默认 Coffee 提醒、每日完成 1/1、每周/每月切换、免费 Locked、演示解锁、库存和 Stats，crash buffer 为空且进程存活。 |
-| iOS Kotlin/Native、StoreKit 与 XCUITest | ⏳ 最近完成的 34141752940：KMP 通过、StoreKit 8/8 通过，UI 在系统 Next 点击失败，完整流程未通过。2026-09-08 已成功推送 5fcd2d3 并启动 34181433617，结果待回填；历史计费阻挡已解除。 |
+| iOS Kotlin/Native、StoreKit 与 XCUITest | ⏳ 本轮完成 34181433617、34182374786、34183423412：KMP 均通过，StoreKit 每轮均 8/8 通过。最近 UI 已关闭键盘教学提示并聚焦金额，但旧值未删除导致 30500，完整流程未通过。对应清除旧值及可见按钮直接点击修复已在本地，推送因网络失败，未验证。34184540550 为旧提交重复运行，已取消。 |
 | iOS Simulator 产物检查 | ⏳ 未执行；目标为 0.55 (19)、arm64/x86_64 通用未签名 `.app` ZIP |
 | 发布产物签名与 SHA-256 | Android 已验证 0.55 (19)、com.familyquest.app、minSdk 26、targetSdk 33、APK v2 签名有效，28,394,992 bytes。SHA-256：`9B83AC7FCFFBCDCDB721DBA6FEA87F2B91D7D3DAFF8B2411EECAC867766C5241`。iOS ZIP 尚未生成，不发布 Release。 |
 | 真机/App Store archive | ⏳ 最终目标已扩展为 App Store；签名 Archive、TestFlight 和真机沙盒仍未完成，需要 Apple Developer 账户、证书和 provisioning profile。Simulator `.app` 不是 IPA。 |
