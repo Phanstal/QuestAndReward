@@ -1770,7 +1770,7 @@ private fun LegalLinks() {
         Row {
             TextButton(onClick = {
                 linkError = runCatching {
-                    uriHandler.openUri("https://github.com/Phanstal/QuestAndReward/blob/main/docs/privacy-policy.md")
+                    uriHandler.openUri("https://github.com/Phanstal/QuestAndReward/blob/77377b1e0006d72fc2577631ad0a278a25a98a17/docs/privacy-policy.md")
                 }.isFailure
             }) { Text("Privacy Policy", color = PremiumOrange) }
             TextButton(onClick = {

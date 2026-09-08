@@ -72,7 +72,7 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ## iOS 构建
 
-iOS 需要 macOS、Xcode 16.x 和 JDK 17。打开 `iosApp/iosApp.xcodeproj`，选择共享 `QuestAndReward` scheme 后即可在模拟器使用仓库内的 `QuestAndReward.storekit` 测试购买和恢复；真机运行需为 target 选择 Apple Developer Team。Xcode Build Phase 会自动构建并链接共享 Kotlin framework。
+iOS 使用 macOS、Xcode 26.2 和 JDK 17。打开 `iosApp/iosApp.xcodeproj`，选择共享 `QuestAndReward` scheme 后即可在模拟器使用仓库内的 `QuestAndReward.storekit` 测试购买和恢复；真机运行需为 target 选择 Apple Developer Team。Xcode Build Phase 会自动构建并链接共享 Kotlin framework。
 
 完整的环境安装、共享测试、模拟器运行、真机签名、archive 和 IPA 导出步骤见 [`docs/macos-ios-build-guide.md`](docs/macos-ios-build-guide.md)。Windows 不能运行 Kotlin/Native Apple 链接器或 Xcode；仓库通过 GitHub Actions 的 macOS runner 执行无签名 Simulator 构建和测试，真机或 App Store 包仍需 Apple Developer 签名环境。
 
@@ -142,7 +142,7 @@ signing=unsigned iOS Simulator app (not IPA)
 
 Stats 提供并列的 “Import Data” 和 “Export Backup” 入口。导出生成 `quest-backup-YYYY-MM-DD.json`，使用 `wish-force-backup` 格式和 `formatVersion = 3`。备份包含角色与当前选择、完整心愿目标（奖励、Deposit、提醒日期）、任务、奖励、完成记录、账本、兑换与物品状态、不可变事件和已处理命令，可用于恢复当前应用数据。
 
-导入选择文件后立即执行结构、版本和引用完整性校验，并在单一 Room 事务中原子恢复；任何失败都会回滚并保留原数据库。完整备份 v3 兼容读取 v2；v2 缺少 Deposit 和提醒日期时按无 Deposit、无提醒日期处理。v0.3 的旧展示型 JSON 和 NDJSON 事件文件都不能通过 “Import Data” 恢复。Android 由系统文件选择器选择文件；iOS 从可通过 Files 访问的应用 Documents 中读取文件名排序最新的备份。
+导入选择文件后立即执行结构、版本和引用完整性校验，并在单一 Room 事务中原子恢复；任何失败都会回滚并保留原数据库。完整备份 v3 兼容读取 v2；v2 缺少 Deposit 和提醒日期时按无 Deposit、无提醒日期处理。v0.3 的旧展示型 JSON 和 NDJSON 事件文件都不能通过 “Import Data” 恢复。Android/iOS 均通过系统文件选择器选择文件，取消选择不会导入；iOS 导出仍写入可通过 Files 访问的应用 Documents。
 
 ### 尚未实现
 

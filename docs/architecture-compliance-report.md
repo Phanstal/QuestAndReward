@@ -32,6 +32,15 @@
 
 ### 2026-09-08 验收前检查
 
+- 34187076820 已通过 KMP 编译（原生委托修复有效），但模拟器启动超过 6 分钟未结束。✅ 下一轮固定到官方 runner 清单已有的 iPhone 16 / iOS 26.2，启动步骤上限 5 分钟并保留启动日志；不再选取不确定的首个 iOS 26 runtime，不改变应用或测试通过条件。
+
+- ✅ 已验证交易若已撤销/过期/升级，购买回调与更新监听在等待 SDK finish/重新核验之前立即清除缓存权益并锁定；避免后续网络超时错误保留已知失效的 Premium。复用 grantsPremium 判定，既有原生撤销/过期/监听测试继续保留，无领域或数据库变化。
+
+- ✅ GitHub API 已确认永久链接的政策文件存在（2,694 字节）；CI 在正式构建阶段增加公开网页 HTTP 成功及标题核验，curl 请求 30 秒上限、最多 2 次重试，仅只读公开文档，不修改业务或订阅。浏览器页面测试仍需该步骤实际通过。
+
+- ✅ 政策入口固定到已推送的政策版本提交永久链接，不依赖尚未合并的 main 文件或临时分支保留；不提前合并未通过验收的应用代码。HTTP 页面可用性仍需单独核验，本机网络读取出现 EOF，不声称已完成网页验收。
+- 最新 Android test/Compose 20 项再次通过；Lint 实际为 0 error、1 条既有 OldTargetApi warning（targetSdk 33），不是无告警。本轮不升级 Android targetSdk。
+
 - ✅ 将现有法律入口提取为同文件私有 Compose 组件，付费墙和 Stats 共用，使 Premium 用户也能访问政策；复用已存在的 URI 打开及错误处理，不新增服务/仓库/领域规则。共享 UI 变化后将补跑 Compose instrumentation 与 Lint，再打包。
 
 - 34186615415 在 Kotlin 编译阶段发现 Objective-C/Kotlin 混合继承限制，未执行 StoreKit/UI。✅ 已将 UIDocumentPicker 委托改为 BackupActions 内部持有的 NSObject 对象，不复制文件处理或业务规则；平台边界、回调及事务恢复保持不变，下一轮继续编译验证。

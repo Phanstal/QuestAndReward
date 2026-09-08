@@ -61,16 +61,17 @@ jobs:
            fi
 
       - name: Boot iPhone Simulator
+        timeout-minutes: 5
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$GITHUB_WORKSPACE/build"
-          simulator_udid="$(xcrun simctl list devices available -j | jq -r '[.devices | to_entries[] | select(.key | contains("iOS-26")) | .value[] | select(.name | startswith("iPhone"))][0].udid')"
+          simulator_udid="$(xcrun simctl list devices available -j | jq -r '[.devices["com.apple.CoreSimulator.SimRuntime.iOS-26-2"][] | select(.name == "iPhone 16")][0].udid')"
           test -n "$simulator_udid"
           test "$simulator_udid" != "null"
           echo "SIMULATOR_UDID=$simulator_udid" >> "$GITHUB_ENV"
           xcrun simctl boot "$simulator_udid" 2>/dev/null || true
-          xcrun simctl bootstatus "$simulator_udid" -b
+          xcrun simctl bootstatus "$simulator_udid" -b | tee "$GITHUB_WORKSPACE/build/ios-simulator-boot.log"
 
       - name: Run StoreKit and iOS UI tests
         timeout-minutes: 25
@@ -119,6 +120,12 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             | tee "$GITHUB_WORKSPACE/build/xcodebuild-archive.log"
           plutil -lint "$GITHUB_WORKSPACE/build/QuestAndReward.xcarchive/Products/Applications/QuestAndReward.app/PrivacyInfo.xcprivacy"
+
+      - name: Verify public privacy policy
+        run: |
+          policy_url="https://github.com/Phanstal/QuestAndReward/blob/77377b1e0006d72fc2577631ad0a278a25a98a17/docs/privacy-policy.md"
+          curl --fail --location --retry 2 --max-time 30 "$policy_url" -o "$RUNNER_TEMP/quest-privacy-policy.html"
+          grep -q 'QuestAndReward Privacy Policy' "$RUNNER_TEMP/quest-privacy-policy.html"
 
       - name: Build x86_64 Simulator app
         shell: bash
@@ -222,6 +229,7 @@ jobs:
           path: |
             build/*.xcresult
             build/xcode-test.log
+            build/ios-simulator-boot.log
             build/xcodebuild-*.log
             build/ios-cold-launch.png
             build/QuestAndReward*.ips

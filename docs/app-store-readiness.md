@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | 完整 UI 验收 | 最新完成的 34185637618 已使用 Xcode 26.2，KMP 和 StoreKit 8/8 通过；UI 在付费墙文字节点 not hittable 失败 | 已推送按可见 frame 操作的修复，34186615415 运行中；不省略金额和业务断言 |
 | 试用资格 | 已从真实 StoreKit offer/eligibility 生成；不符合资格显示 Subscribe。Xcode 26.2 StoreKit 8/8 通过，Android 不符合资格文案测试通过 | 继续完整 UI 验收及真实沙盒核验 |
-| 订阅说明和法律链接 | 已增加续订说明、Privacy Policy、Apple 标准 EULA 和打开失败提示；政策按实际本地存储/历史保留写入 docs/privacy-policy.md | 发布合并后检查主分支公开政策 URL；所有者确认实际隐私披露与商店资料 |
+| 订阅说明和法律链接 | 已增加续订说明、Privacy Policy、Apple 标准 EULA 和打开失败提示；政策按实际本地存储/历史保留编写，并固定到已推送政策版本的永久链接，GitHub API 已确认文件存在 | CI 增加公开网页 HTTP/标题核验；所有者确认实际隐私披露与商店资料 |
 | Privacy manifest | 已添加 PrivacyInfo.xcprivacy 和自有 UserDefaults 的 CA92.1 用途，并加入 Xcode 应用资源 | 清点最终静态链接依赖的 required-reason API、验证 Archive 隐私报告 |
 | 导入交互 | 已改为系统 JSON 文件选择器，取消不导入；复用现有完整校验和原子恢复，测试增加真实文件选择 | 尚待 iOS 编译与实际导入验收 |
 | 订阅响应时限 | 已改为只恢复一次的 continuation 竞速；商品、资格、权益、恢复请求各 15 秒调用方上限，迟到结果忽略；添加相关原生测试 | 尚待测试，并需真机沙盒覆盖断网、认证弹窗与恢复前台 |

@@ -128,7 +128,7 @@ xcodebuild test \
 
 原生测试覆盖首次免费、购买、恢复、管理器重建后的 entitlement、过期/退款降级、pending/失败保持锁定及取消结果处理。XCUITest 还包含默认 Coffee、四页导航、免费购买锁定、订阅后重启保持、任务与奖励编辑、兑换、使用、70% 出售，以及导出、重置和导入恢复。实际通过情况以架构自检报告中的 CI 结果为准，不以测试源码存在代替验收通过。
 
-商品查询配置 15 秒超时与失败后 30 秒冷却，不自动重试或伪造购买成功；系统购买/恢复认证交互由 StoreKit 处理。启动、前台恢复和交易更新均核验 entitlement，并按已验证到期时间安排再次核验，应用保持前台也不无限延用过期权限。订阅没有到期时间、被撤销、被升级或签名未验证时均不授予权限。
+商品查询配置 15 秒调用方超时与失败后 30 秒冷却；资格、权益和恢复请求同样采用 15 秒一次性完成竞速，忽略 SDK 迟到结果，不自动重试或伪造购买成功。系统购买确认由 StoreKit 和用户控制。启动、前台恢复和交易更新均核验 entitlement，并按已验证到期时间安排再次核验。核验超时只保留尚未到期的已验证结果，否则保持锁定并显示错误。订阅没有到期时间、被撤销、被升级或签名未验证时均不授予权限。
 
 真实 App Store 购买还需要在 App Store Connect 创建同一个 `quest_reward_monthly` 自动续订产品，设置月费和 7 天免费试用，并完成 Paid Applications Agreement、税务、银行信息、签名和审核。仓库中的 `.storekit` 文件只服务本地测试，不能代替 App Store Connect 配置。
 
@@ -236,8 +236,8 @@ rm -rf .kotlin app/build data/build domain/build application/build sync/build
 ## 11. 发布前记录
 
 每次 iOS 发布至少记录：Git commit、`MARKETING_VERSION`、`CURRENT_PROJECT_VERSION`、Xcode 版本、目标 iOS 版本、测试设备、archive 是否成功、导出方式和 IPA SHA-256。macOS 实测结果应回填到 `docs/architecture-compliance-report.md`，不能用 Windows 上的 Android 结果代替。
-# 2026-09 上架工具链补充
+## 12. 2026-09 上架工具链补充
 
 上传 App Store Connect 当前要求 Xcode 26+ 和 iOS 26 SDK。CI 固定选择 Xcode 26.2（macos-15 runner 已安装），不改变 iOS 15 最低部署版本。模拟器测试之后增加 `xcodebuild archive -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO` 编译门禁；该无签名 Archive 不能直接上传 TestFlight，签名验证仍需开发者账号。
 
-付费墙从 StoreKit 读取试用资格，不符合资格时显示 Subscribe；价格使用本地化商品价格。PrivacyInfo.xcprivacy 随应用打包，正式 Archive 仍需核对依赖使用的 required-reason API。隐私政策位于 docs/privacy-policy.md，发布前应确认主分支公开链接有效，并由所有者核对 App Store Connect 的隐私披露与实际数据处理一致。
+付费墙从 StoreKit 读取试用资格，不符合资格时显示 Subscribe；价格使用本地化商品价格。PrivacyInfo.xcprivacy 随应用打包，正式 Archive 仍需核对依赖使用的 required-reason API。隐私政策位于 docs/privacy-policy.md，应用入口固定到已发布政策提交的永久链接；政策变更时应同步更新入口版本，并由所有者核对 App Store Connect 的隐私披露与实际数据处理一致。

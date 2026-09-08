@@ -168,6 +168,7 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
                 reportError("The App Store could not verify this purchase.")
                 return
             }
+            invalidateInactiveTransaction(transaction)
             await transaction.finish()
             await refreshEntitlement()
         case .pending:
@@ -205,6 +206,7 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
                     self.reportError("The App Store returned an unverified transaction.")
                     continue
                 }
+                self.invalidateInactiveTransaction(transaction)
                 await transaction.finish()
                 await self.refreshEntitlement()
             }
@@ -212,6 +214,23 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
     }
 
     private enum StoreRequestError: Error { case temporarilyUnavailable, timedOut }
+
+    private func invalidateInactiveTransaction(_ transaction: Transaction) {
+        guard transaction.productID == Self.productID,
+              !Self.grantsPremium(
+                productID: transaction.productID, isVerified: true,
+                expirationDate: transaction.expirationDate,
+                revocationDate: transaction.revocationDate,
+                isUpgraded: transaction.isUpgraded, now: Date()
+              ) else { return }
+        // A verified revocation must invalidate cached access even if the next
+        // entitlement request times out or the store is offline.
+        lastVerifiedExpiration = nil
+        status = .checking
+        isEligibleForTrial = false
+        bridge.setChecking(priceLabel: priceLabel)
+        bridge.setTrialEligibility(eligible: false)
+    }
 
     private func refreshTrialEligibility() async {
         guard let subscription = product?.subscription,
