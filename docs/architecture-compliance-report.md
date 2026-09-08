@@ -16,6 +16,8 @@
 
 ## 追加检查
 
+- 34192190785：StoreKit 原生 9/9 通过（5.844 秒），UI 创建 500 金币任务成功，重命名后的即时字段断言失败；同一失败日志中 task-title 已为 Verified Quest。✅ 本轮仅让已有 fill 内容断言等待可访问性状态更新，10 秒上限且仍要求精确匹配；不修改生产代码、订阅、业务规则、Room 或事件。静态门禁通过后重新执行 CI；完整 UI 尚未通过。
+
 - 34187777245：KMP 与模拟器启动通过；Swift 编译报 Transaction 同时匹配 StoreKit/SwiftUI，原生与 UI 测试均未执行。✅ 修复仅在平台适配器参数使用 StoreKit.Transaction 全限定类型，无业务、权限规则、数据库或接口变化；静态门禁通过，连同独立 iOS 备份测试进入下一轮验证。
 
 - ✅ iOS 备份事务测试静态门禁：复用现有 Room builder、Repository、IosPreferencesStore 和 Android 已验证的冲突场景；仅 iosTest 增加真实 SQLite 回滚验证，无生产 API、schema 或业务规则变化。每次使用 UUID 命名的临时数据库和独立偏好 suite，清理仅限该测试生成的三个文件及两个 suite。断言失败后完整备份快照、选择角色不变，实际结果待 macOS CI 验证。

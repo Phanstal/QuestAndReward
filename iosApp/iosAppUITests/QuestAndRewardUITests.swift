@@ -275,7 +275,13 @@ final class QuestAndRewardUITests: XCTestCase {
         // an empty string even when the field contains the default amount.
         let oldValue = field.label
         app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count) + value)
-        XCTAssertTrue(field.label == value || field.value as? String == value, app.debugDescription)
+        let updatedText = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ in
+                field.label == value || field.value as? String == value
+            },
+            object: field
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [updatedText], timeout: 10), .completed, app.debugDescription)
     }
 
     private func dismissKeyboard(_ app: XCUIApplication) {
