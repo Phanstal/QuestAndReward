@@ -16,7 +16,7 @@
 
 | 项目 | 代码证据 / 实际缺口 | 下一步 |
 | --- | --- | --- |
-| 完整 UI 验收 | 34185637618 的 KMP 和 StoreKit 8/8 通过，UI 在付费墙文字节点 not hittable 失败；34187777245 已通过 KMP 和模拟器启动 | 本轮 StoreKit/UI 运行中，不省略金额和业务断言 |
+| 完整 UI 验收 | 34187777245 的 KMP 和模拟器启动通过；Swift 因 Transaction 类型歧义编译失败，StoreKit/UI 未执行 | 已在 f8b9806 限定 StoreKit.Transaction；Git HTTPS 连续连接失败，修复及新增 iOS 回滚测试尚未推送验证 |
 | 试用资格 | 已从真实 StoreKit offer/eligibility 生成；不符合资格显示 Subscribe。Xcode 26.2 StoreKit 8/8 通过，Android 不符合资格文案测试通过 | 继续完整 UI 验收及真实沙盒核验 |
 | 订阅说明和法律链接 | 已增加续订说明、Privacy Policy、Apple 标准 EULA 和打开失败提示；政策按实际本地存储/历史保留编写，并固定到已推送政策版本的永久链接，GitHub API 已确认文件存在 | CI 增加公开网页 HTTP/标题核验；所有者确认实际隐私披露与商店资料 |
 | Privacy manifest | 已添加 PrivacyInfo.xcprivacy 和自有 UserDefaults 的 CA92.1 用途，并加入 Xcode 应用资源 | 清点最终静态链接依赖的 required-reason API、验证 Archive 隐私报告 |
