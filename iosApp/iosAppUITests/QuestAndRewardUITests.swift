@@ -190,9 +190,11 @@ final class QuestAndRewardUITests: XCTestCase {
         let next = app.keyboards.buttons["next"]
         let advancedFocus = next.exists
         if advancedFocus {
-            next.tap()
+            next.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             // The reward description sits between its name and price.
-            if identifier == "reward-cost" && next.exists { next.tap() }
+            if identifier == "reward-cost" && next.exists {
+                next.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            }
         } else if !field.isHittable {
             app.swipeUp()
         }
@@ -216,7 +218,9 @@ final class QuestAndRewardUITests: XCTestCase {
         guard app.keyboards.firstMatch.exists else { return }
         for _ in 0..<3 {
             let next = app.keyboards.buttons["next"]
-            if next.exists { next.tap() } else { break }
+            if next.exists {
+                next.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            } else { break }
         }
         app.typeText("\n")
         let hidden = XCTNSPredicateExpectation(
