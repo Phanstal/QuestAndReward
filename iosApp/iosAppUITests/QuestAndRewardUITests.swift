@@ -187,29 +187,29 @@ final class QuestAndRewardUITests: XCTestCase {
 
     private func fill(_ app: XCUIApplication, identifier: String, value: String) {
         let field = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-        let next = app.keyboards.buttons["next"]
-        let advancedFocus = next.exists
-        if advancedFocus {
-            next.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            // The reward description sits between its name and price.
-            if identifier == "reward-cost" && next.exists {
-                next.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        // A clipped Compose TextView can exist while its editable area is outside
+        // the drawer viewport. Reveal it above the keyboard before selecting it.
+        for _ in 0..<8 {
+            let keyboard = app.keyboards.firstMatch
+            let bottom = keyboard.exists ? keyboard.frame.minY : app.frame.maxY
+            if field.exists && field.frame.height >= 48 &&
+                field.frame.minY >= app.frame.minY && field.frame.maxY < bottom {
+                break
             }
-        } else if !field.isHittable {
-            app.swipeUp()
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            origin.withOffset(CGVector(dx: app.frame.midX, dy: bottom - 30))
+                .press(forDuration: 0.1, thenDragTo:
+                    origin.withOffset(CGVector(dx: app.frame.midX, dy: bottom * 0.4)))
         }
         XCTAssertTrue(field.waitForExistence(timeout: 10), app.debugDescription)
-        let oldValue = field.value as? String ?? field.label
-        if !advancedFocus {
-            XCTAssertTrue(app.frame.contains(field.frame), app.debugDescription)
-            if field.isHittable {
-                field.tap()
-            } else {
-                // Compose exposes a virtual TextView with no XCTest hit point on iOS.
-                field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            }
+        XCTAssertGreaterThanOrEqual(field.frame.height, 48, app.debugDescription)
+        XCTAssertTrue(app.frame.contains(field.frame), app.debugDescription)
+        if app.keyboards.firstMatch.exists {
+            XCTAssertLessThan(field.frame.maxY, app.keyboards.firstMatch.frame.minY, app.debugDescription)
         }
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10), app.debugDescription)
+        let oldValue = field.value as? String ?? field.label
         app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count) + value)
         XCTAssertTrue(field.label == value || field.value as? String == value, app.debugDescription)
     }
