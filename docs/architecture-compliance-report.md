@@ -69,9 +69,9 @@
 | Data/Room Android instrumentation | ✅ 本轮 API 33 `habitica_test_api33` 30/30 通过；包含事务迁移标记、取消后备份恢复、默认愿望与已有数据保留。 |
 | App/Compose Android instrumentation | ✅ 最终代码 20/20 通过；包含免费高余额 Coffee 锁定、订阅 UI 状态和 500ms 动画回归。 |
 | Android lintDebug / assembleDebug | ✅ 包含可访问性测试标识的最终代码已通过，Lint XML 无 issue。API 33 覆盖安装和冷启动成功；实际点击通过引导、默认 Coffee 提醒、每日完成 1/1、每周/每月切换、免费 Locked、演示解锁、库存和 Stats，crash buffer 为空且进程存活。 |
-| iOS Kotlin/Native、StoreKit 与 XCUITest | ⏳ 启动配置修复已在第四至六轮生效，KMP 测试通过。最近实际执行的第六轮 xcresult：原生 6/7 通过，取消测试超时，UI 购买状态断言失败，共 6 passed / 2 failed / 0 skipped。后续测试修改已提交；第七、八轮因 GitHub 账户计费/支出上限限制未启动，不能计作测试执行或通过。 |
+| iOS Kotlin/Native、StoreKit 与 XCUITest | ⏳ 最近完成的 34141752940：KMP 通过、StoreKit 8/8 通过，UI 在系统 Next 点击失败，完整流程未通过。2026-09-08 已成功推送 5fcd2d3 并启动 34181433617，结果待回填；历史计费阻挡已解除。 |
 | iOS Simulator 产物检查 | ⏳ 未执行；目标为 0.55 (19)、arm64/x86_64 通用未签名 `.app` ZIP |
 | 发布产物签名与 SHA-256 | Android 已验证 0.55 (19)、com.familyquest.app、minSdk 26、targetSdk 33、APK v2 签名有效，28,394,992 bytes。SHA-256：`9B83AC7FCFFBCDCDB721DBA6FEA87F2B91D7D3DAFF8B2411EECAC867766C5241`。iOS ZIP 尚未生成，不发布 Release。 |
-| 真机/App Store archive | 不适用 | 本轮目标是构建和测试；当前 iOS 产物明确为 Simulator `.app`，不是 IPA。真机或 App Store 发布仍需 Apple Developer 账户、证书和 provisioning profile。 |
+| 真机/App Store archive | ⏳ 最终目标已扩展为 App Store；签名 Archive、TestFlight 和真机沙盒仍未完成，需要 Apple Developer 账户、证书和 provisioning profile。Simulator `.app` 不是 IPA。 |
 
 测试前结论：v0.55 的架构边界、可靠 entitlement 设计、迁移兼容和跨平台职责划分全部为 ✅，且没有 Room schema、备份格式、同步协议或 Domain/Application 公共 API 变更。当前仅授权进入测试，不代表 Android/iOS 构建或发布已经通过；这些结论必须在实际门禁完成后回填。
