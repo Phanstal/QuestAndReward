@@ -501,6 +501,11 @@ class FamilyQuestScreenTest {
         }
         composeRule.onNodeWithText("StoreKit is unavailable.").assertIsDisplayed()
         composeRule.onNodeWithText("Start Free Trial").assertIsEnabled()
+        composeRule.runOnIdle {
+            premiumState.value = PremiumUiState.free().copy(canStartFreeTrial = false)
+        }
+        composeRule.onAllNodesWithText("Start Free Trial").assertCountEquals(0)
+        composeRule.onNodeWithText("Subscribe").assertIsEnabled()
         composeRule.onNodeWithText("Restore Purchases").assertIsEnabled().performClick()
         composeRule.onAllNodesWithText("Start Free Trial").assertCountEquals(0)
     }

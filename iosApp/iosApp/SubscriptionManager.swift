@@ -20,6 +20,7 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
     @Published private(set) var priceLabel = SubscriptionManager.fallbackPrice
     @Published private(set) var isBusy = false
     @Published private(set) var errorMessage: String?
+    @Published private(set) var isEligibleForTrial = false
 
     private var product: Product?
     private var updatesTask: Task<Void, Never>?
@@ -70,6 +71,7 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
         } catch {
             productLoadError = "Unable to load the premium subscription."
         }
+        await refreshTrialEligibility()
         await refreshEntitlement(errorMessage: productLoadError)
     }
 
@@ -105,6 +107,8 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
             bridge.setFree(priceLabel: price, errorMessage: errorMessage)
         }
         bridge.setBusy(isBusy: isBusy)
+        if entitled { isEligibleForTrial = false }
+        bridge.setTrialEligibility(eligible: isEligibleForTrial)
         if let errorMessage { bridge.reportError(message: errorMessage) }
         scheduleExpiration(expiration)
     }
@@ -128,6 +132,8 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
             reportError("Premium subscription is unavailable.")
             return
         }
+
+        await refreshTrialEligibility()
 
         do {
             await handlePurchaseResult(try await product.purchase())
@@ -190,6 +196,19 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
     }
 
     private enum StoreRequestError: Error { case temporarilyUnavailable, timedOut }
+
+    private func refreshTrialEligibility() async {
+        guard let subscription = product?.subscription,
+              let offer = subscription.introductoryOffer,
+              offer.paymentMode == .freeTrial,
+              offer.period.unit == .week, offer.period.value == 1 else {
+            isEligibleForTrial = false
+            bridge.setTrialEligibility(eligible: false)
+            return
+        }
+        isEligibleForTrial = await subscription.isEligibleForIntroOffer
+        bridge.setTrialEligibility(eligible: isEligibleForTrial)
+    }
 
     private func loadProduct() async throws -> Product? {
         guard Date() >= retryProductLoadAfter else { throw StoreRequestError.temporarilyUnavailable }

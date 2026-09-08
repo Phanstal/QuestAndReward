@@ -236,3 +236,8 @@ rm -rf .kotlin app/build data/build domain/build application/build sync/build
 ## 11. 发布前记录
 
 每次 iOS 发布至少记录：Git commit、`MARKETING_VERSION`、`CURRENT_PROJECT_VERSION`、Xcode 版本、目标 iOS 版本、测试设备、archive 是否成功、导出方式和 IPA SHA-256。macOS 实测结果应回填到 `docs/architecture-compliance-report.md`，不能用 Windows 上的 Android 结果代替。
+# 2026-09 上架工具链补充
+
+上传 App Store Connect 当前要求 Xcode 26+ 和 iOS 26 SDK。CI 固定选择 Xcode 26.2（macos-15 runner 已安装），不改变 iOS 15 最低部署版本。模拟器测试之后增加 `xcodebuild archive -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO` 编译门禁；该无签名 Archive 不能直接上传 TestFlight，签名验证仍需开发者账号。
+
+付费墙从 StoreKit 读取试用资格，不符合资格时显示 Subscribe；价格使用本地化商品价格。PrivacyInfo.xcprivacy 随应用打包，正式 Archive 仍需核对依赖使用的 required-reason API。隐私政策位于 docs/privacy-policy.md，发布前应确认主分支公开链接有效，并由所有者核对 App Store Connect 的隐私披露与实际数据处理一致。

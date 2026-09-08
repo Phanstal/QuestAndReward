@@ -29,6 +29,7 @@ final class SubscriptionManagerTests: XCTestCase {
         XCTAssertEqual(manager.status, .free)
         XCTAssertEqual(manager.priceLabel, "$1.99/month")
         XCTAssertFalse(manager.isBusy)
+        XCTAssertTrue(manager.isEligibleForTrial)
     }
 
     @MainActor
@@ -40,6 +41,7 @@ final class SubscriptionManagerTests: XCTestCase {
 
         XCTAssertEqual(manager.status, .premium)
         XCTAssertNil(manager.errorMessage)
+        XCTAssertFalse(manager.isEligibleForTrial)
 
         let recreated = makeManager()
         await recreated.refreshStoreState()

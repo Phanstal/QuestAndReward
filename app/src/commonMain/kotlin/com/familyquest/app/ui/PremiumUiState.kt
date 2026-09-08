@@ -11,6 +11,8 @@ data class PremiumUiState(
     val priceLabel: String = DEFAULT_PREMIUM_PRICE,
     val isBusy: Boolean = false,
     val errorMessage: String? = null,
+    val canStartFreeTrial: Boolean = true,
+    val subscriptionNotice: String = "Android subscriptions in this version are a demonstration. No payment is charged.",
 ) {
     val isPremium: Boolean get() = status == PremiumStatus.PREMIUM
 

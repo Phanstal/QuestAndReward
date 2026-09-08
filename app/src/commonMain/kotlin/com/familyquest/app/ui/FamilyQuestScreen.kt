@@ -8,6 +8,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
@@ -1632,6 +1635,8 @@ private fun PremiumSheet(
     onUpgrade: () -> Unit,
     onRestore: () -> Unit,
 ) {
+    val uriHandler = LocalUriHandler.current
+    var linkError by remember { mutableStateOf(false) }
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -1654,6 +1659,7 @@ private fun PremiumSheet(
                     )
                     .clickable { }
                     .navigationBarsPadding()
+                    .verticalScroll(rememberScrollState())
                     .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -1709,7 +1715,8 @@ private fun PremiumSheet(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        "🎁 7-day free trial, then ${state.priceLabel}",
+                        if (state.canStartFreeTrial) "🎁 7-day free trial, then ${state.priceLabel}"
+                        else state.priceLabel,
                         color = PremiumOrange,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -1727,7 +1734,8 @@ private fun PremiumSheet(
                         when {
                             state.status == PremiumStatus.CHECKING -> "Checking Subscription…"
                             state.isBusy -> "Processing…"
-                            else -> "Start Free Trial"
+                            state.canStartFreeTrial -> "Start Free Trial"
+                            else -> "Subscribe"
                         },
                         fontWeight = FontWeight.Bold,
                     )
@@ -1744,6 +1752,24 @@ private fun PremiumSheet(
                 TextButton(onClick = onDismiss) {
                     Text("No thanks, continue free", color = Color.White.copy(alpha = 0.30f))
                 }
+                Text(
+                    state.subscriptionNotice,
+                    color = Color.White.copy(alpha = 0.62f),
+                    fontSize = 11.sp,
+                )
+                Row {
+                    TextButton(onClick = {
+                        linkError = runCatching {
+                            uriHandler.openUri("https://github.com/Phanstal/QuestAndReward/blob/main/docs/privacy-policy.md")
+                        }.isFailure
+                    }) { Text("Privacy Policy", color = PremiumOrange) }
+                    TextButton(onClick = {
+                        linkError = runCatching {
+                            uriHandler.openUri("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
+                        }.isFailure
+                    }) { Text("Terms of Use", color = PremiumOrange) }
+                }
+                if (linkError) Text("Unable to open this link.", color = HealthRed, fontSize = 12.sp)
             }
         }
     }

@@ -32,6 +32,12 @@ jobs:
       - name: Configure Gradle
         run: chmod +x gradlew
 
+      - name: Select App Store toolchain
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
       - name: Restore Kotlin Native cache
         id: native-cache
         uses: actions/cache/restore@v4
@@ -59,7 +65,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$GITHUB_WORKSPACE/build"
-          simulator_udid="$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name == "iPhone 16")][0].udid')"
+          simulator_udid="$(xcrun simctl list devices available -j | jq -r '[.devices | to_entries[] | select(.key | contains("iOS-26")) | .value[] | select(.name | startswith("iPhone"))][0].udid')"
           test -n "$simulator_udid"
           test "$simulator_udid" != "null"
           echo "SIMULATOR_UDID=$simulator_udid" >> "$GITHUB_ENV"
@@ -99,6 +105,20 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CONFIGURATION_BUILD_DIR="$GITHUB_WORKSPACE/build/ios-arm64" \
             | tee "$GITHUB_WORKSPACE/build/xcodebuild-arm64.log"
+
+      - name: Build unsigned Release archive
+        shell: bash
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme QuestAndReward \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$GITHUB_WORKSPACE/build/QuestAndReward.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee "$GITHUB_WORKSPACE/build/xcodebuild-archive.log"
+          plutil -lint "$GITHUB_WORKSPACE/build/QuestAndReward.xcarchive/Products/Applications/QuestAndReward.app/PrivacyInfo.xcprivacy"
 
       - name: Build x86_64 Simulator app
         shell: bash
