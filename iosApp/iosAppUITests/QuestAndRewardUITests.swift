@@ -223,7 +223,9 @@ final class QuestAndRewardUITests: XCTestCase {
             )
             XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 10), .completed, app.debugDescription)
         }
-        let oldValue = field.value as? String ?? field.label
+        // Compose's virtual TextView exposes its text in label; value can be
+        // an empty string even when the field contains the default amount.
+        let oldValue = field.label
         app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count) + value)
         XCTAssertTrue(field.label == value || field.value as? String == value, app.debugDescription)
     }
