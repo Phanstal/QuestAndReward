@@ -215,6 +215,26 @@ final class SubscriptionManagerTests: XCTestCase {
     }
 
     @MainActor
+    func testStoreTimeoutIgnoresLateResultAndAllowsNextRequest() async throws {
+        do {
+            let _: Int = try await SubscriptionManager.withStoreTimeout(nanoseconds: 10_000_000) {
+                await withCheckedContinuation { continuation in
+                    Task {
+                        try? await Task.sleep(nanoseconds: 200_000_000)
+                        continuation.resume(returning: 7)
+                    }
+                }
+            }
+            XCTFail("A late result must not bypass the request timeout")
+        } catch {
+            // The SDK request may complete after the caller has already timed out.
+        }
+        try await Task.sleep(nanoseconds: 250_000_000)
+        let next = try await SubscriptionManager.withStoreTimeout { 9 }
+        XCTAssertEqual(next, 9)
+    }
+
+    @MainActor
     private func makeManager() -> SubscriptionManager {
         SubscriptionManager(bridge: IosPremiumBridge(), startAutomatically: false)
     }

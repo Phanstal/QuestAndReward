@@ -1745,7 +1745,7 @@ private fun PremiumSheet(
                 }
                 TextButton(
                     onClick = onRestore,
-                    enabled = !state.isBusy && state.status != PremiumStatus.CHECKING,
+                    enabled = !state.isBusy && (state.status != PremiumStatus.CHECKING || state.errorMessage != null),
                 ) {
                     Text("Restore Purchases", color = Color.White.copy(alpha = 0.62f))
                 }

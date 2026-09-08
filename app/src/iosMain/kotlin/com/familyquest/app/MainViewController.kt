@@ -23,8 +23,14 @@ import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.NSUserDefaults
 import platform.Foundation.NSUserDomainMask
+import platform.darwin.NSObject
+import platform.Foundation.NSURL
 import platform.Foundation.create
+import platform.UIKit.UIApplication
+import platform.UIKit.UIDocumentPickerViewController
+import platform.UIKit.UIDocumentPickerDelegateProtocol
 import platform.UIKit.UIViewController
+import platform.UniformTypeIdentifiers.UTTypeJSON
 
 private const val APP_UI_PREFERENCES = "app_ui"
 private const val KEY_FIRST_RUN_COMPLETED = "first_run_completed"
@@ -69,7 +75,9 @@ fun MainViewController(
     }
 }
 
-private class IosDocumentsBackupActions : BackupActions {
+private class IosDocumentsBackupActions : NSObject(), BackupActions, UIDocumentPickerDelegateProtocol {
+    private var pendingContent: ((String) -> Unit)? = null
+    private var pendingFailure: (() -> Unit)? = null
     private val documentsPath: String
         get() = NSFileManager.defaultManager.URLForDirectory(
             directory = NSDocumentDirectory,
@@ -85,34 +93,67 @@ private class IosDocumentsBackupActions : BackupActions {
         onSuccess: () -> Unit,
         onFailure: () -> Unit,
     ) {
-        val path = "$documentsPath/$fileName"
-        val bytes = content.encodeToByteArray()
-        val data = bytes.usePinned { pinned ->
-            NSData.create(bytes = pinned.addressOf(0), length = bytes.size.toULong())
-        }
-        val success = NSFileManager.defaultManager.createFileAtPath(
-            path = path,
-            contents = data,
-            attributes = null,
-        )
+        val success = runCatching {
+            val path = "$documentsPath/$fileName"
+            val bytes = content.encodeToByteArray()
+            val data = bytes.usePinned { pinned ->
+                NSData.create(bytes = pinned.addressOf(0), length = bytes.size.toULong())
+            }
+            NSFileManager.defaultManager.createFileAtPath(path = path, contents = data, attributes = null)
+        }.getOrDefault(false)
         if (success) onSuccess() else onFailure()
     }
 
     override fun import(onContent: (String) -> Unit, onFailure: () -> Unit) {
-        val fileName = NSFileManager.defaultManager
-            .contentsOfDirectoryAtPath(documentsPath, error = null)
-            ?.filterIsInstance<String>()
-            ?.filter { it.startsWith("quest-backup-") && it.endsWith(".json") }
-            ?.maxOrNull()
-        if (fileName == null) {
+        if (pendingContent != null) {
             onFailure()
             return
         }
-        val content = NSString.create(
-            contentsOfFile = "$documentsPath/$fileName",
-            encoding = NSUTF8StringEncoding,
-            error = null,
-        ) as String?
-        if (content == null) onFailure() else onContent(content)
+        val presenter = generateSequence(UIApplication.sharedApplication.keyWindow?.rootViewController) {
+            it.presentedViewController
+        }.lastOrNull()
+        if (presenter == null) {
+            onFailure()
+            return
+        }
+        runCatching {
+            val picker = UIDocumentPickerViewController(forOpeningContentTypes = listOf(UTTypeJSON), asCopy = true)
+            picker.allowsMultipleSelection = false
+            picker.delegate = this
+            picker.directoryURL = NSURL.fileURLWithPath(documentsPath, isDirectory = true)
+            pendingContent = onContent
+            pendingFailure = onFailure
+            presenter.presentViewController(picker, animated = true, completion = null)
+        }.onFailure {
+            pendingContent = null
+            pendingFailure = null
+            onFailure()
+        }
+    }
+
+    override fun documentPicker(controller: UIDocumentPickerViewController, didPickDocumentsAtURLs: List<*>) {
+        val onContent = pendingContent
+        val onFailure = pendingFailure
+        pendingContent = null
+        pendingFailure = null
+        val url = didPickDocumentsAtURLs.firstOrNull() as? NSURL
+        if (url == null) {
+            onFailure?.invoke()
+            return
+        }
+        val scoped = url.startAccessingSecurityScopedResource()
+        val content = try {
+            runCatching {
+                NSString.create(contentsOfURL = url, encoding = NSUTF8StringEncoding, error = null) as String?
+            }.getOrNull()
+        } finally {
+            if (scoped) url.stopAccessingSecurityScopedResource()
+        }
+        if (content == null) onFailure?.invoke() else onContent?.invoke(content)
+    }
+
+    override fun documentPickerWasCancelled(controller: UIDocumentPickerViewController) {
+        pendingContent = null
+        pendingFailure = null
     }
 }

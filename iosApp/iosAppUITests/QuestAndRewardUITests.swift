@@ -136,6 +136,9 @@ final class QuestAndRewardUITests: XCTestCase {
         tap(app, "Reset Anyway")
         if app.staticTexts["Got it"].waitForExistence(timeout: 5) { tap(app, "Got it") }
         tap(app, "📤 Import Data", scroll: true)
+        let backupFile = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "quest-backup-")).firstMatch
+        XCTAssertTrue(backupFile.waitForExistence(timeout: 15), app.debugDescription)
+        backupFile.tap()
         tap(app, "Quests")
         XCTAssertTrue(app.staticTexts["Verified Quest"].waitForExistence(timeout: 10))
         tap(app, "Verified Quest")

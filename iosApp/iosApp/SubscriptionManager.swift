@@ -27,6 +27,7 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
     private var expirationTask: Task<Void, Never>?
     private var isRefreshing = false
     private var retryProductLoadAfter = Date.distantPast
+    private var lastVerifiedExpiration: Date?
 
     init(bridge: IosPremiumBridge, startAutomatically: Bool = true) {
         self.bridge = bridge
@@ -78,23 +79,38 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
     func refreshEntitlement(errorMessage: String? = nil) async {
         var entitled = false
         var expiration: Date?
-        for await result in Transaction.currentEntitlements {
-            guard case .verified(let transaction) = result else {
-                continue
+        do {
+            let verified = try await Self.withStoreTimeout {
+                var acceptedExpiration: Date?
+                for await result in Transaction.currentEntitlements {
+                    guard case .verified(let transaction) = result else {
+                        continue
+                    }
+                    guard Self.grantsPremium(
+                        productID: transaction.productID,
+                        isVerified: true,
+                        expirationDate: transaction.expirationDate,
+                        revocationDate: transaction.revocationDate,
+                        isUpgraded: transaction.isUpgraded,
+                        now: Date()
+                    ) else {
+                        continue
+                    }
+                    acceptedExpiration = transaction.expirationDate
+                    break
+                }
+                return acceptedExpiration
             }
-            guard Self.grantsPremium(
-                productID: transaction.productID,
-                isVerified: true,
-                expirationDate: transaction.expirationDate,
-                revocationDate: transaction.revocationDate,
-                isUpgraded: transaction.isUpgraded,
-                now: Date()
-            ) else {
-                continue
+            expiration = verified
+            entitled = verified != nil
+            lastVerifiedExpiration = verified
+        } catch {
+            if lastVerifiedExpiration.map({ $0 > Date() }) != true {
+                status = .checking
+                bridge.setChecking(priceLabel: priceLabel)
             }
-            entitled = true
-            expiration = transaction.expirationDate
-            break
+            reportError("Unable to check your subscription. Please try again when the App Store is available.")
+            return
         }
 
         let price = product.map { "\($0.displayPrice)/month" } ?? priceLabel
@@ -174,7 +190,7 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
         setBusy(true)
         defer { setBusy(false) }
         do {
-            try await AppStore.sync()
+            try await Self.withStoreTimeout { try await AppStore.sync() }
             await refreshEntitlement()
         } catch {
             reportError("Purchases could not be restored.")
@@ -206,23 +222,17 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
             bridge.setTrialEligibility(eligible: false)
             return
         }
-        isEligibleForTrial = await subscription.isEligibleForIntroOffer
+        isEligibleForTrial = (try? await Self.withStoreTimeout {
+            await subscription.isEligibleForIntroOffer
+        }) ?? false
         bridge.setTrialEligibility(eligible: isEligibleForTrial)
     }
 
     private func loadProduct() async throws -> Product? {
         guard Date() >= retryProductLoadAfter else { throw StoreRequestError.temporarilyUnavailable }
         do {
-            let loaded = try await withThrowingTaskGroup(of: Product?.self) { group in
-                group.addTask {
-                    try await Product.products(for: [SubscriptionManager.productID]).first
-                }
-                group.addTask {
-                    try await Task.sleep(nanoseconds: 15_000_000_000)
-                    throw StoreRequestError.timedOut
-                }
-                defer { group.cancelAll() }
-                return try await group.next() ?? nil
+            let loaded = try await Self.withStoreTimeout {
+                try await Product.products(for: [SubscriptionManager.productID]).first
             }
             if loaded == nil { retryProductLoadAfter = Date().addingTimeInterval(30) }
             return loaded
@@ -239,6 +249,26 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
         }
         bridge.setBusy(isBusy: value)
         if let errorMessage { bridge.reportError(message: errorMessage) }
+    }
+
+    // A structured task group waits for a non-cooperative StoreKit child even
+    // after cancellation. Resolve the caller once and ignore late SDK results.
+    static func withStoreTimeout<Value>(
+        nanoseconds: UInt64 = 15_000_000_000,
+        operation: @escaping @MainActor () async throws -> Value
+    ) async throws -> Value {
+        try await withCheckedThrowingContinuation { continuation in
+            let request = StoreRequestRace(continuation: continuation)
+            request.operation = Task {
+                do { request.finish(.success(try await operation())) }
+                catch { request.finish(.failure(error)) }
+            }
+            request.timer = Task {
+                do { try await Task.sleep(nanoseconds: nanoseconds) }
+                catch { return }
+                request.finish(.failure(StoreRequestError.timedOut))
+            }
+        }
     }
 
     private func scheduleExpiration(_ expiration: Date?) {
@@ -277,5 +307,26 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
             revocationDate == nil &&
             !isUpgraded &&
             (expirationDate.map { $0 > now } ?? false)
+    }
+}
+
+@MainActor
+private final class StoreRequestRace<Value> {
+    private var continuation: CheckedContinuation<Value, Error>?
+    var operation: Task<Void, Never>?
+    var timer: Task<Void, Never>?
+
+    init(continuation: CheckedContinuation<Value, Error>) {
+        self.continuation = continuation
+    }
+
+    func finish(_ result: Result<Value, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        operation?.cancel()
+        timer?.cancel()
+        operation = nil
+        timer = nil
+        continuation.resume(with: result)
     }
 }

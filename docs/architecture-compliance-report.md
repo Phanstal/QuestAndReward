@@ -32,6 +32,12 @@
 
 ### 2026-09-08 验收前检查
 
+- ✅ iOS 导入复用现有 BackupActions，改由 UIDocumentPicker 选择 JSON，取消不执行导入；选中内容仍调用现有 Application 校验和 Room 原子恢复，不复制恢复规则。平台回调释放 security-scoped 访问，导出文件错误转换为现有失败回调；UI 测试增加真实文件选择步骤。无备份格式或领域接口变化。
+- Android 本轮后续实际结果：App instrumentation 20/20 通过，lintDebug 成功；原签名冲突后测试工具已清理该模拟器安装，未执行手动卸载或数据删除。后续变更仅 iOS 平台/测试，Android 不重复扩大测试。
+
+- ✅ 后续可靠性修复：复用 SubscriptionManager 平台边界，以一次性 continuation 竞速替代会等待子任务结束的 task group；商品、资格、entitlement 和恢复请求均有 15 秒调用方上限，SDK 迟到结果不写权限。核验失败只保留尚未过期的最近已验证权益，否则维持锁定并显示可恢复错误；系统购买确认仍由用户控制，未伪造购买成功。新增迟到结果/后续请求测试，无 Domain/Application/Room 变化。
+- JVM test 已成功（未变更任务复用缓存）；Data instrumentation 30/30 通过；App instrumentation 因旧安装签名冲突未执行成功，不能计为测试通过。下次运行前已检查仅平台超时及错误态恢复按钮发生变化，静态门禁仍为 ✅。
+
 - ✅ 上架缺口修复静态门禁：试用资格只由 Swift StoreKit 的真实 introductoryOffer/eligibility 产生，经现有桥传入 PremiumUiState；iOS 默认不承诺试用，购买后立即去除试用资格。Domain/Application/Room v8/事件/备份不变；Android 保留演示订阅并明确展示无扣费说明。
 - ✅ 复用现有状态桥、付费墙和 LocalUriHandler 增加自动续订说明、法律入口及打开失败反馈；付费墙可滚动，适配增加的文本。隐私政策按实际本地数据和重置保留历史语义编写，正式 main URL 必须在发布合并后检查可用，不能预填上线完成。
 - ✅ PrivacyInfo.xcprivacy 声明应用自有 UserDefaults 用途 CA92.1、无跟踪及无开发者收集字段，加入应用资源；最终依赖包的隐私报告仍需 Archive 验证。图标通过现有 .NET 图像库铺底输出 RGB，不引入运行时依赖。
