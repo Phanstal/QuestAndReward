@@ -24,6 +24,7 @@
 | 订阅响应时限 | Product 请求使用 task-group 15 秒计时；取消仍依赖 StoreKit 子任务配合，entitlement/restore 无独立有界等待 | 真机/沙盒覆盖断网、慢响应和恢复前台；不把计时器当作已证明的硬超时 |
 | 系统版本覆盖 | 当前 CI 为 iPhone 16 / iOS 18.5，部署最低版本为 15 | 当前系统及最低支持版本兼容性尚未完整验收 |
 | 正式构建 | 工作流仅构建 Debug Simulator，尚无 Release device Archive 门禁 | 增加/执行 Release device 构建检查，账号就绪后签名 Archive、验证及 TestFlight |
+| 上传 SDK 要求（阻挡） | 本轮 CI 实际 Xcode 16.4 / iOS 18.5 SDK；2026-09-08 实时读取 Apple 官方要求，自 2026-04-28 起上传必须使用 Xcode 26+ 和 iOS 26 SDK | 在兼容的 macOS runner 上使用 Xcode 26+，验证现有 Kotlin/Compose/Room 编译兼容性及完整回归；不因构建 SDK 升级擅自提高最低部署版本 |
 | 上架图标 | 实际 PNG 含透明像素 | 保留图案并铺实色背景，输出无 alpha 图标后验证正式包 |
 
 ## 需要所有者提供的资料
@@ -31,6 +32,8 @@
 Apple Developer 会员及 Team；App Store Connect 同 ID 月订阅、美国区 $1.99 价格和 7 天试用；协议、税务、收款；CI 签名与上传凭证（仅存 Secrets）；真实隐私政策和支持地址、商店及隐私披露资料；TestFlight 真机测试人员。
 
 这些资料不阻挡模拟器验收。当前没有签名 IPA，也不具备“仅填账号即可上线”的证据。
+
+Apple 上传 SDK 与 required-reason API 要求来源：[Upcoming Requirements](https://developer.apple.com/news/upcoming-requirements/)，本轮实际读取日期 2026-09-08。
 
 ## 测试覆盖边界
 
