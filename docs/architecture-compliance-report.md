@@ -16,6 +16,8 @@
 
 ## 追加检查
 
+- 34187777245：KMP 与模拟器启动通过；Swift 编译报 Transaction 同时匹配 StoreKit/SwiftUI，原生与 UI 测试均未执行。✅ 修复仅在平台适配器参数使用 StoreKit.Transaction 全限定类型，无业务、权限规则、数据库或接口变化；静态门禁通过，连同独立 iOS 备份测试进入下一轮验证。
+
 - ✅ iOS 备份事务测试静态门禁：复用现有 Room builder、Repository、IosPreferencesStore 和 Android 已验证的冲突场景；仅 iosTest 增加真实 SQLite 回滚验证，无生产 API、schema 或业务规则变化。每次使用 UUID 命名的临时数据库和独立偏好 suite，清理仅限该测试生成的三个文件及两个 suite。断言失败后完整备份快照、选择角色不变，实际结果待 macOS CI 验证。
 - 34187777245 已实际通过 KMP 和 iPhone 16 / iOS 26.2 启动，StoreKit/UI 尚在执行；不能将运行中状态计为通过。
 

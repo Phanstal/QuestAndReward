@@ -215,7 +215,7 @@ final class SubscriptionManager: NSObject, ObservableObject, IosPremiumRequestHa
 
     private enum StoreRequestError: Error { case temporarilyUnavailable, timedOut }
 
-    private func invalidateInactiveTransaction(_ transaction: Transaction) {
+    private func invalidateInactiveTransaction(_ transaction: StoreKit.Transaction) {
         guard transaction.productID == Self.productID,
               !Self.grantsPremium(
                 productID: transaction.productID, isVerified: true,
