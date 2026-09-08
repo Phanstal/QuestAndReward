@@ -16,13 +16,13 @@
 
 | 项目 | 代码证据 / 实际缺口 | 下一步 |
 | --- | --- | --- |
-| 完整 UI 验收 | 最新完成的 34185637618 已使用 Xcode 26.2，KMP 和 StoreKit 8/8 通过；UI 在付费墙文字节点 not hittable 失败 | 已推送按可见 frame 操作的修复，34186615415 运行中；不省略金额和业务断言 |
+| 完整 UI 验收 | 34185637618 的 KMP 和 StoreKit 8/8 通过，UI 在付费墙文字节点 not hittable 失败；34187777245 已通过 KMP 和模拟器启动 | 本轮 StoreKit/UI 运行中，不省略金额和业务断言 |
 | 试用资格 | 已从真实 StoreKit offer/eligibility 生成；不符合资格显示 Subscribe。Xcode 26.2 StoreKit 8/8 通过，Android 不符合资格文案测试通过 | 继续完整 UI 验收及真实沙盒核验 |
 | 订阅说明和法律链接 | 已增加续订说明、Privacy Policy、Apple 标准 EULA 和打开失败提示；政策按实际本地存储/历史保留编写，并固定到已推送政策版本的永久链接，GitHub API 已确认文件存在 | CI 增加公开网页 HTTP/标题核验；所有者确认实际隐私披露与商店资料 |
 | Privacy manifest | 已添加 PrivacyInfo.xcprivacy 和自有 UserDefaults 的 CA92.1 用途，并加入 Xcode 应用资源 | 清点最终静态链接依赖的 required-reason API、验证 Archive 隐私报告 |
-| 导入交互 | 已改为系统 JSON 文件选择器，取消不导入；复用现有完整校验和原子恢复，测试增加真实文件选择 | 尚待 iOS 编译与实际导入验收 |
+| 导入交互 | 已改为系统 JSON 文件选择器，取消不导入；复用现有完整校验和原子恢复，Kotlin iOS 编译已通过 | 系统文件选择及实际导入仍待 UI 验收；新增 iOS SQLite 失败回滚测试待执行 |
 | 订阅响应时限 | 已改为只恢复一次的 continuation 竞速；商品、资格、权益、恢复请求各 15 秒调用方上限，迟到结果忽略；添加相关原生测试 | 尚待测试，并需真机沙盒覆盖断网、认证弹窗与恢复前台 |
-| 系统版本覆盖 | 当前 CI 为 iPhone 16 / iOS 18.5，部署最低版本为 15 | 当前系统及最低支持版本兼容性尚未完整验收 |
+| 系统版本覆盖 | 当前 CI 为 iPhone 16 / iOS 26.2，部署最低版本为 15；34187777245 模拟器启动成功 | 当前系统全功能及最低支持版本兼容性尚未完整验收 |
 | 正式构建 | 已增加无签名 Release device Archive 和 manifest 检查门禁，UI 尚未通过所以尚未执行 | 通过完整模拟器门禁后执行；账号就绪后签名 Archive、验证及 TestFlight |
 | 上传 SDK 要求 | CI 已显式选择 Xcode 26.2 / iOS 26 SDK；34185637618 实际完成 Kotlin/Compose/Swift 编译与 StoreKit 8/8 | 继续完整 UI、Release 构建与运行验证；最低部署仍是 iOS 15 |
 | 上架图标 | 已输出并验证无 alpha 的 1024×1024 RGB 图标 | 验证正式包资产 |
@@ -40,6 +40,7 @@ Apple 上传 SDK 与 required-reason API 要求来源：[Upcoming Requirements](
 - 当前 XCUITest 单一长流程包含引导、每日提醒、Weekly 展示、免费商店锁定、订阅、Daily 自定义任务编辑完成、奖励编辑购买使用出售、心愿切换、备份重置恢复、删除及重启权益。
 - 源码中存在测试步骤不代表执行通过；该长流程会在第一个失败处停止。
 - 原生 StoreKit 测试覆盖恢复购买、过期和退款降级，但尚未通过 UI 操作验证全部对应情形。
-- 本地已扩展月任务频次、Deposit、免费高余额购买锁定的 iOS UI 步骤，尚待实际运行；无效备份回滚仍只有共享/Android 规则覆盖，不能称为 iOS UI 已验收。
+- 已扩展月任务频次、Deposit、免费高余额购买锁定的 iOS UI 步骤，尚待实际运行；新增 iOS 独立临时 Room 数据库测试验证非法备份及恢复冲突后完整快照不变，尚未执行，不能称为 iOS 已验收。
 - Android 本轮 JVM test 成功（未变更项复用缓存），Room 30/30、Compose 20/20、lintDebug、assembleDebug 成功；API 33 安装冷启动成功、crash buffer 为空。
-- 当前 Android APK：0.55 (19)，28,398,842 字节，v2 签名有效；SHA-256 `6C7CD2F1D66952BBA7E52B4C5362FCACF2FC4D5B196D29A72029DE23D0D725F1`。
+- 最后一次 Android Lint：0 errors、1 条既有 OldTargetApi 警告（target 33）；不属于零警告。
+- 当前 Android APK：0.55 (19)，28,399,812 字节，v2 签名有效；SHA-256 `B6E71312A90AAFCBD5806E19861E0C1F95A5D0B365AF75BC4A551EDB2D4347D6`。本轮重新安装及冷启动成功，进程存活、crash buffer 为空。

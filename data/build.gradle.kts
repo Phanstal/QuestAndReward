@@ -22,6 +22,10 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.room.ktx)
         }
+        iosTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
         androidInstrumentedTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.androidx.test.core)

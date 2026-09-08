@@ -1,6 +1,6 @@
 # AI 架构合规性自检报告
 
-检查日期：2026-09-07
+检查日期：2026-09-08
 检查对象：QuestAndReward v0.55 Kotlin Multiplatform 测试前候选版本
 检查范围：Android/iOS 构建、共享 Compose、Domain/Application/Sync/Data、Room KMP v8、StoreKit 2 平台适配器、备份与事件兼容
 适用基线：[architecture-spec.md](architecture-spec.md)  
@@ -15,6 +15,9 @@
 | 杜绝重复造轮子 | 检索并复用稳定实现 | ✅ | 已扫描 common、shared-kernel、base 和 Util/Helper/Converter/Client 命名，没有可复用的自有公共层。订阅直接使用 StoreKit 2 与 StoreKitTest；状态分发复用 StateFlow/ObservableObject；动画复用 Compose `animateFloatAsState`、`tween` 和 `FastOutSlowInEasing`，没有另建计时器或平行业务实现。 |
 
 ## 追加检查
+
+- ✅ iOS 备份事务测试静态门禁：复用现有 Room builder、Repository、IosPreferencesStore 和 Android 已验证的冲突场景；仅 iosTest 增加真实 SQLite 回滚验证，无生产 API、schema 或业务规则变化。每次使用 UUID 命名的临时数据库和独立偏好 suite，清理仅限该测试生成的三个文件及两个 suite。断言失败后完整备份快照、选择角色不变，实际结果待 macOS CI 验证。
+- 34187777245 已实际通过 KMP 和 iPhone 16 / iOS 26.2 启动，StoreKit/UI 尚在执行；不能将运行中状态计为通过。
 
 | 检查项 | 结果 | 本轮证据与结论 |
 | :--- | :--- | :--- |
