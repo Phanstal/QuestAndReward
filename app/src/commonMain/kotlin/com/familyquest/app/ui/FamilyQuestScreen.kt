@@ -1258,6 +1258,7 @@ private fun StatsContent(
         }
         item { BackupActions(onImport = onImport, onExport = onExport) }
         item { ResetDataButton(onReset) }
+        item { LegalLinks() }
     }
 }
 
@@ -1635,8 +1636,6 @@ private fun PremiumSheet(
     onUpgrade: () -> Unit,
     onRestore: () -> Unit,
 ) {
-    val uriHandler = LocalUriHandler.current
-    var linkError by remember { mutableStateOf(false) }
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -1757,21 +1756,30 @@ private fun PremiumSheet(
                     color = Color.White.copy(alpha = 0.62f),
                     fontSize = 11.sp,
                 )
-                Row {
-                    TextButton(onClick = {
-                        linkError = runCatching {
-                            uriHandler.openUri("https://github.com/Phanstal/QuestAndReward/blob/main/docs/privacy-policy.md")
-                        }.isFailure
-                    }) { Text("Privacy Policy", color = PremiumOrange) }
-                    TextButton(onClick = {
-                        linkError = runCatching {
-                            uriHandler.openUri("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
-                        }.isFailure
-                    }) { Text("Terms of Use", color = PremiumOrange) }
-                }
-                if (linkError) Text("Unable to open this link.", color = HealthRed, fontSize = 12.sp)
+                LegalLinks()
             }
         }
+    }
+}
+
+@Composable
+private fun LegalLinks() {
+    val uriHandler = LocalUriHandler.current
+    var linkError by remember { mutableStateOf(false) }
+    Column {
+        Row {
+            TextButton(onClick = {
+                linkError = runCatching {
+                    uriHandler.openUri("https://github.com/Phanstal/QuestAndReward/blob/main/docs/privacy-policy.md")
+                }.isFailure
+            }) { Text("Privacy Policy", color = PremiumOrange) }
+            TextButton(onClick = {
+                linkError = runCatching {
+                    uriHandler.openUri("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
+                }.isFailure
+            }) { Text("Terms of Use", color = PremiumOrange) }
+        }
+        if (linkError) Text("Unable to open this link.", color = HealthRed, fontSize = 12.sp)
     }
 }
 

@@ -10,22 +10,22 @@
 - 订阅产品 `quest_reward_monthly`；验证交易签名、产品、过期、撤销及升级状态；启动、前台和交易更新重新核验，恢复调用 AppStore.sync。
 - StoreKit 测试配置在测试 target 资源和 Debug Run scheme 中；不能替代 App Store Connect 产品配置。
 - Info.plist 配置 Compose 所需帧率开关、Documents 文件共享；未声明摄像头、定位等权限。
-- System.Drawing 实际读取图标为 1024×1024、Format32bppArgb，逐像素检查发现非 255 alpha；需要消除透明像素及 alpha 通道，再进行资产编译和 Archive 校验。
+- 图标已铺底并实际验证为 1024×1024、Format24bppRgb，无 alpha 通道；正式 Archive 校验仍待完成。
 
 ## 尚未完成的代码和验收项
 
 | 项目 | 代码证据 / 实际缺口 | 下一步 |
 | --- | --- | --- |
-| 完整 UI 验收 | 本轮 34181433617、34182374786、34183423412 的 KMP 和 StoreKit 8/8 均通过。最新截图确认系统提示已关闭、金额已获得焦点，但测试未清除默认值而输入成 30500 | 本地已修正读取旧文本及可见按钮直接点击；推送网络失败，尚未验证。不得省略金额和业务断言换取通过 |
-| 试用资格 | FamilyQuestScreen 付费墙固定显示 7-day free trial 和 Start Free Trial；SubscriptionManager 未读取 introductory offer eligibility | 以真实资格显示试用或普通订阅，补充不符合试用资格测试 |
-| 订阅说明和法律链接 | 付费墙已有本地化价格、恢复购买；没有隐私政策、使用条款入口，也没有完整自动续订说明 | 确认真实公开隐私政策地址及适用条款后接入；不能填写占位网址冒充完成 |
-| Privacy manifest | 仓库未发现 PrivacyInfo.xcprivacy；iosMain 使用 NSUserDefaults | 清点应用及最终依赖包 required-reason API，补充适用声明并验证最终 Archive |
-| 导入交互 | IosDocumentsBackupActions 只读取 Documents 中字典序最新 quest-backup-*.json，没有文件选择器 | 当前测试只能验证此流程；不能称为任意文件选择导入已验收。与 Android 交互差异需在最终验收中明确 |
-| 订阅响应时限 | Product 请求使用 task-group 15 秒计时；取消仍依赖 StoreKit 子任务配合，entitlement/restore 无独立有界等待 | 真机/沙盒覆盖断网、慢响应和恢复前台；不把计时器当作已证明的硬超时 |
+| 完整 UI 验收 | 最新完成的 34185637618 已使用 Xcode 26.2，KMP 和 StoreKit 8/8 通过；UI 在付费墙文字节点 not hittable 失败 | 已推送按可见 frame 操作的修复，34186615415 运行中；不省略金额和业务断言 |
+| 试用资格 | 已从真实 StoreKit offer/eligibility 生成；不符合资格显示 Subscribe。Xcode 26.2 StoreKit 8/8 通过，Android 不符合资格文案测试通过 | 继续完整 UI 验收及真实沙盒核验 |
+| 订阅说明和法律链接 | 已增加续订说明、Privacy Policy、Apple 标准 EULA 和打开失败提示；政策按实际本地存储/历史保留写入 docs/privacy-policy.md | 发布合并后检查主分支公开政策 URL；所有者确认实际隐私披露与商店资料 |
+| Privacy manifest | 已添加 PrivacyInfo.xcprivacy 和自有 UserDefaults 的 CA92.1 用途，并加入 Xcode 应用资源 | 清点最终静态链接依赖的 required-reason API、验证 Archive 隐私报告 |
+| 导入交互 | 已改为系统 JSON 文件选择器，取消不导入；复用现有完整校验和原子恢复，测试增加真实文件选择 | 尚待 iOS 编译与实际导入验收 |
+| 订阅响应时限 | 已改为只恢复一次的 continuation 竞速；商品、资格、权益、恢复请求各 15 秒调用方上限，迟到结果忽略；添加相关原生测试 | 尚待测试，并需真机沙盒覆盖断网、认证弹窗与恢复前台 |
 | 系统版本覆盖 | 当前 CI 为 iPhone 16 / iOS 18.5，部署最低版本为 15 | 当前系统及最低支持版本兼容性尚未完整验收 |
-| 正式构建 | 工作流仅构建 Debug Simulator，尚无 Release device Archive 门禁 | 增加/执行 Release device 构建检查，账号就绪后签名 Archive、验证及 TestFlight |
-| 上传 SDK 要求（阻挡） | 本轮 CI 实际 Xcode 16.4 / iOS 18.5 SDK；2026-09-08 实时读取 Apple 官方要求，自 2026-04-28 起上传必须使用 Xcode 26+ 和 iOS 26 SDK | 在兼容的 macOS runner 上使用 Xcode 26+，验证现有 Kotlin/Compose/Room 编译兼容性及完整回归；不因构建 SDK 升级擅自提高最低部署版本 |
-| 上架图标 | 实际 PNG 含透明像素 | 保留图案并铺实色背景，输出无 alpha 图标后验证正式包 |
+| 正式构建 | 已增加无签名 Release device Archive 和 manifest 检查门禁，UI 尚未通过所以尚未执行 | 通过完整模拟器门禁后执行；账号就绪后签名 Archive、验证及 TestFlight |
+| 上传 SDK 要求 | CI 已显式选择 Xcode 26.2 / iOS 26 SDK；34185637618 实际完成 Kotlin/Compose/Swift 编译与 StoreKit 8/8 | 继续完整 UI、Release 构建与运行验证；最低部署仍是 iOS 15 |
+| 上架图标 | 已输出并验证无 alpha 的 1024×1024 RGB 图标 | 验证正式包资产 |
 
 ## 需要所有者提供的资料
 
@@ -40,5 +40,6 @@ Apple 上传 SDK 与 required-reason API 要求来源：[Upcoming Requirements](
 - 当前 XCUITest 单一长流程包含引导、每日提醒、Weekly 展示、免费商店锁定、订阅、Daily 自定义任务编辑完成、奖励编辑购买使用出售、心愿切换、备份重置恢复、删除及重启权益。
 - 源码中存在测试步骤不代表执行通过；该长流程会在第一个失败处停止。
 - 原生 StoreKit 测试覆盖恢复购买、过期和退款降级，但尚未通过 UI 操作验证全部对应情形。
-- 当前 iOS UI 用例没有单独覆盖月任务频次、Deposit、免费高余额购买锁定及无效备份导入回滚。Android/共享规则测试已有相关覆盖，也不能替代这些 iOS UI 验收。
-- Android 已有结果来自此前验证；本次只修改 Swift UI 测试和文档，没有重新运行 Android，不将旧结果称为本轮重测。
+- 本地已扩展月任务频次、Deposit、免费高余额购买锁定的 iOS UI 步骤，尚待实际运行；无效备份回滚仍只有共享/Android 规则覆盖，不能称为 iOS UI 已验收。
+- Android 本轮 JVM test 成功（未变更项复用缓存），Room 30/30、Compose 20/20、lintDebug、assembleDebug 成功；API 33 安装冷启动成功、crash buffer 为空。
+- 当前 Android APK：0.55 (19)，28,398,842 字节，v2 签名有效；SHA-256 `6C7CD2F1D66952BBA7E52B4C5362FCACF2FC4D5B196D29A72029DE23D0D725F1`。

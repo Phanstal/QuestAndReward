@@ -29,7 +29,7 @@ final class QuestAndRewardUITests: XCTestCase {
         super.tearDown()
     }
 
-    func testFirstRunFreeLockSubscriptionAndRelaunch() {
+    func testFirstRunFreeLockSubscriptionAndRelaunch() throws {
         let app = XCUIApplication()
         app.launch()
 
@@ -67,7 +67,7 @@ final class QuestAndRewardUITests: XCTestCase {
         assertPremiumStore(app)
         capture("StoreKit premium store")
 
-        exercisePremiumFeatures(app)
+        try exercisePremiumFeatures(app)
 
         tap(app, "Rewards")
         XCTAssertTrue(app.staticTexts["My Rewards"].waitForExistence(timeout: 5))
@@ -84,7 +84,7 @@ final class QuestAndRewardUITests: XCTestCase {
         assertPremiumStore(app)
     }
 
-    private func exercisePremiumFeatures(_ app: XCUIApplication) {
+    private func exercisePremiumFeatures(_ app: XCUIApplication) throws {
         tap(app, "Quests")
         tap(app, "📅 Daily")
         tap(app, "Set Your First Daily Quest")
@@ -101,6 +101,16 @@ final class QuestAndRewardUITests: XCTestCase {
         capture("Quest progress")
 
         tap(app, "Store")
+        XCTAssertTrue(app.staticTexts["620"].waitForExistence(timeout: 10))
+        let subscription = try XCTUnwrap(session.allTransactions().last)
+        try session.refundTransaction(identifier: subscription.identifier)
+        XCTAssertTrue(app.staticTexts["Locked"].waitForExistence(timeout: 20))
+        let lockedCoffee = app.descendants(matching: .any)["buy-reward-Specialty Coffee"].firstMatch
+        XCTAssertFalse(lockedCoffee.isEnabled)
+        XCTAssertTrue(app.staticTexts["620"].exists)
+        capture("Free high-balance Coffee lock")
+        try session.buyProduct(productIdentifier: "quest_reward_monthly")
+        assertPremiumStore(app)
         tapIdentifier(app, "buy-reward-Specialty Coffee")
         tap(app, "Rewards")
         XCTAssertTrue(app.staticTexts["Specialty Coffee"].waitForExistence(timeout: 10))
@@ -119,12 +129,35 @@ final class QuestAndRewardUITests: XCTestCase {
         tap(app, "Save", scroll: true)
         tapLabel(app, "Set Verified Reward as wish goal", scroll: true)
         if app.staticTexts["Got it"].waitForExistence(timeout: 3) { tap(app, "Got it") }
+        XCTAssertTrue(app.staticTexts["🔒 Deposit: 1🪙 · +100 on redeem"].waitForExistence(timeout: 10))
         tapIdentifier(app, "buy-reward-Verified Reward", scroll: true)
         tap(app, "Rewards")
         XCTAssertTrue(app.staticTexts["Verified Reward"].waitForExistence(timeout: 10))
         tapLabel(app, "Sell Verified Reward for 7 coins")
         capture("Sell confirmation")
         tap(app, "Confirm Sell")
+
+        tap(app, "Quests")
+        tap(app, "🗓️ Monthly")
+        let addMonthly = app.staticTexts.matching(NSPredicate(
+            format: "label IN %@", ["Set Your First Monthly Quest", "Add Monthly Quest"]
+        )).firstMatch
+        interact(app, element: addMonthly, scroll: true)
+        for count in 1...8 {
+            XCTAssertTrue(app.descendants(matching: .any)["task-monthly-target-\(count)"].firstMatch.exists)
+        }
+        tapIdentifier(app, "task-monthly-target-2")
+        fill(app, identifier: "task-title", value: "Monthly Acceptance")
+        fill(app, identifier: "task-reward", value: "1")
+        tap(app, "Add", scroll: true)
+        tapIdentifier(app, "complete-task-Monthly Acceptance", scroll: true)
+        XCTAssertTrue(app.staticTexts["This month 1/2 · 2 times/month"].waitForExistence(timeout: 10))
+        tapIdentifier(app, "complete-task-Monthly Acceptance")
+        XCTAssertTrue(app.staticTexts["This month 2/2 · 2 times/month"].waitForExistence(timeout: 10))
+        capture("Monthly occurrence progress")
+        tap(app, "Monthly Acceptance")
+        tap(app, "🗑️ Delete", scroll: true)
+        tap(app, "📅 Daily")
 
         tap(app, "Stats")
         tap(app, "📥 Export Backup", scroll: true)

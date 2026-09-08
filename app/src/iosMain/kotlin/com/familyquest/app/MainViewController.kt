@@ -75,9 +75,19 @@ fun MainViewController(
     }
 }
 
-private class IosDocumentsBackupActions : NSObject(), BackupActions, UIDocumentPickerDelegateProtocol {
+private class IosDocumentsBackupActions : BackupActions {
     private var pendingContent: ((String) -> Unit)? = null
     private var pendingFailure: (() -> Unit)? = null
+    private val pickerDelegate = object : NSObject(), UIDocumentPickerDelegateProtocol {
+        override fun documentPicker(controller: UIDocumentPickerViewController, didPickDocumentsAtURLs: List<*>) {
+            handlePickedDocument(didPickDocumentsAtURLs)
+        }
+
+        override fun documentPickerWasCancelled(controller: UIDocumentPickerViewController) {
+            pendingContent = null
+            pendingFailure = null
+        }
+    }
     private val documentsPath: String
         get() = NSFileManager.defaultManager.URLForDirectory(
             directory = NSDocumentDirectory,
@@ -119,7 +129,7 @@ private class IosDocumentsBackupActions : NSObject(), BackupActions, UIDocumentP
         runCatching {
             val picker = UIDocumentPickerViewController(forOpeningContentTypes = listOf(UTTypeJSON), asCopy = true)
             picker.allowsMultipleSelection = false
-            picker.delegate = this
+            picker.delegate = pickerDelegate
             picker.directoryURL = NSURL.fileURLWithPath(documentsPath, isDirectory = true)
             pendingContent = onContent
             pendingFailure = onFailure
@@ -131,7 +141,7 @@ private class IosDocumentsBackupActions : NSObject(), BackupActions, UIDocumentP
         }
     }
 
-    override fun documentPicker(controller: UIDocumentPickerViewController, didPickDocumentsAtURLs: List<*>) {
+    private fun handlePickedDocument(didPickDocumentsAtURLs: List<*>) {
         val onContent = pendingContent
         val onFailure = pendingFailure
         pendingContent = null
@@ -152,8 +162,4 @@ private class IosDocumentsBackupActions : NSObject(), BackupActions, UIDocumentP
         if (content == null) onFailure?.invoke() else onContent?.invoke(content)
     }
 
-    override fun documentPickerWasCancelled(controller: UIDocumentPickerViewController) {
-        pendingContent = null
-        pendingFailure = null
-    }
 }

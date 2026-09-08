@@ -32,6 +32,12 @@
 
 ### 2026-09-08 验收前检查
 
+- ✅ 将现有法律入口提取为同文件私有 Compose 组件，付费墙和 Stats 共用，使 Premium 用户也能访问政策；复用已存在的 URI 打开及错误处理，不新增服务/仓库/领域规则。共享 UI 变化后将补跑 Compose instrumentation 与 Lint，再打包。
+
+- 34186615415 在 Kotlin 编译阶段发现 Objective-C/Kotlin 混合继承限制，未执行 StoreKit/UI。✅ 已将 UIDocumentPicker 委托改为 BackupActions 内部持有的 NSObject 对象，不复制文件处理或业务规则；平台边界、回调及事务恢复保持不变，下一轮继续编译验证。
+
+- ✅ 补充已有 XCUITest 长流程：实际完成任务累积到 620 金币后由 StoreKitTest 撤销订阅，验证 Coffee 仍 Locked/禁用且余额不变，再恢复真实模拟交易；验证 10 金币心愿的 1 金币 Deposit；检查月任务八个频次按钮并完成两次 occurrence。均复用现有控件/StoreKitTest，不加入生产测试后门或跳过断言。
+
 - 34185637618：Xcode 26.2 已编译 Kotlin/Compose 和 Swift；StoreKit 8/8 通过（4.9 秒，包含试用资格断言）。UI 在 Start Free Trial 的文字虚拟节点 not hittable 失败，后续未通过。
 - ✅ 复用 interact 处理 iOS 26 虚拟节点：严格确认真实 frame 完整可见且不在键盘后方后，若系统不提供命中点则点击其中心；保留购买、编辑、恢复等业务结果断言，不通过跳过交互来通过测试。下一轮同时验证已提交的平台超时与文件选择器。
 
