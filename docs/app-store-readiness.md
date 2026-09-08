@@ -10,7 +10,7 @@
 - 订阅产品 `quest_reward_monthly`；验证交易签名、产品、过期、撤销及升级状态；启动、前台和交易更新重新核验，恢复调用 AppStore.sync。
 - StoreKit 测试配置在测试 target 资源和 Debug Run scheme 中；不能替代 App Store Connect 产品配置。
 - Info.plist 配置 Compose 所需帧率开关、Documents 文件共享；未声明摄像头、定位等权限。
-- 应用图标目录声明 1024×1024 iOS 图标；最终资产编译和 Archive 校验仍待执行。
+- System.Drawing 实际读取图标为 1024×1024、Format32bppArgb，逐像素检查发现非 255 alpha；需要消除透明像素及 alpha 通道，再进行资产编译和 Archive 校验。
 
 ## 尚未完成的代码和验收项
 
@@ -24,6 +24,7 @@
 | 订阅响应时限 | Product 请求使用 task-group 15 秒计时；取消仍依赖 StoreKit 子任务配合，entitlement/restore 无独立有界等待 | 真机/沙盒覆盖断网、慢响应和恢复前台；不把计时器当作已证明的硬超时 |
 | 系统版本覆盖 | 当前 CI 为 iPhone 16 / iOS 18.5，部署最低版本为 15 | 当前系统及最低支持版本兼容性尚未完整验收 |
 | 正式构建 | 工作流仅构建 Debug Simulator，尚无 Release device Archive 门禁 | 增加/执行 Release device 构建检查，账号就绪后签名 Archive、验证及 TestFlight |
+| 上架图标 | 实际 PNG 含透明像素 | 保留图案并铺实色背景，输出无 alpha 图标后验证正式包 |
 
 ## 需要所有者提供的资料
 
