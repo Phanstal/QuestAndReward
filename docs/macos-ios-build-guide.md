@@ -6,7 +6,7 @@
 
 - Apple Silicon 或 Intel Mac
 - macOS 14 或更高版本
-- Xcode 16.x，并在 Xcode Settings > Platforms 中安装目标 iOS Simulator runtime
+- Xcode 26.2（当前 CI 版本），并在 Xcode Settings > Components 中安装目标 iOS 26 Simulator runtime；上传要求至少 Xcode 26
 - Xcode Command Line Tools：`xcode-select --install`
 - JDK 17。可使用 Android Studio 自带 JBR，或安装 Temurin 17
 - Git
@@ -142,7 +142,7 @@ xcodebuild test \
 4. 免费态余额即使高于 Coffee 价格也保持 `Locked`；本地 StoreKit 购买后才可购买、编辑和新增。
 5. 购买、使用、出售奖励，心愿 Deposit、兑换和统计更新正确。
 6. 杀掉并重启应用后 Room 数据仍存在，Premium 由 StoreKit entitlement 恢复。
-7. 在 Finder 或 Files 中确认应用 Documents 可见。`Export Backup` 写入 `quest-backup-*.json`；`Import Data` 导入 Documents 中按文件名排序最新的同名备份。
+7. 在 Finder 或 Files 中确认应用 Documents 可见。`Export Backup` 写入 `quest-backup-*.json`；`Import Data` 打开系统 JSON 文件选择器，选择后执行完整校验与原子恢复，取消选择不修改数据。
 8. 在 Xcode Debug navigator 和设备日志中确认没有未捕获异常或数据库迁移失败。
 
 iOS 与 Android 使用相同的 Compose 页面和业务服务，因此无需维护第二套 UI 行为。SwiftUI 的 `ContentView` 仅承载共享 `ComposeUIViewController`。

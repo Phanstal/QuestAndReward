@@ -34,9 +34,9 @@ final class QuestAndRewardUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.staticTexts["Level Up Your Life"].waitForExistence(timeout: 20))
-        app.staticTexts["Start Exploring"].tap()
+        tap(app, "Start Exploring")
         XCTAssertTrue(app.staticTexts["Skip"].waitForExistence(timeout: 5))
-        app.staticTexts["Skip"].tap()
+        tap(app, "Skip")
 
         XCTAssertTrue(
             app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Today's Goal"))
@@ -44,34 +44,34 @@ final class QuestAndRewardUITests: XCTestCase {
         )
         XCTAssertTrue(app.staticTexts["Specialty Coffee"].firstMatch.exists)
         capture("Default Coffee reminder")
-        app.staticTexts["Got it"].tap()
+        tap(app, "Got it")
         XCTAssertTrue(app.staticTexts["Today's Quests"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Morning Exercise"].exists)
 
-        app.staticTexts["📆 Weekly"].tap()
+        tap(app, "📆 Weekly")
         XCTAssertTrue(app.staticTexts["Weekly Cleanup"].waitForExistence(timeout: 5))
 
-        app.staticTexts["Store"].tap()
+        tap(app, "Store")
         XCTAssertTrue(app.staticTexts["Reward Store"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Specialty Coffee"].exists)
         XCTAssertTrue(app.staticTexts["Locked"].exists)
         capture("Free store lock")
 
-        app.staticTexts["Upgrade to Premium to create your own rewards!"].tap()
+        tap(app, "Upgrade to Premium to create your own rewards!")
         XCTAssertTrue(app.staticTexts["Start Free Trial"].waitForExistence(timeout: 60), app.debugDescription)
         XCTAssertTrue(
             app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "$1.99/month"))
                 .firstMatch.exists
         )
-        app.staticTexts["Start Free Trial"].tap()
+        tap(app, "Start Free Trial")
         assertPremiumStore(app)
         capture("StoreKit premium store")
 
         exercisePremiumFeatures(app)
 
-        app.staticTexts["Rewards"].tap()
+        tap(app, "Rewards")
         XCTAssertTrue(app.staticTexts["My Rewards"].waitForExistence(timeout: 5))
-        app.staticTexts["Stats"].tap()
+        tap(app, "Stats")
         XCTAssertTrue(
             app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Quest Harvest Board"))
                 .firstMatch.waitForExistence(timeout: 5)
@@ -80,7 +80,7 @@ final class QuestAndRewardUITests: XCTestCase {
         app.terminate()
         app.launch()
         XCTAssertTrue(app.staticTexts["Today's Quests"].waitForExistence(timeout: 20))
-        app.staticTexts["Store"].tap()
+        tap(app, "Store")
         assertPremiumStore(app)
     }
 
@@ -177,15 +177,27 @@ final class QuestAndRewardUITests: XCTestCase {
     }
 
     private func interact(_ app: XCUIApplication, element: XCUIElement, scroll: Bool) {
-        if scroll && !(element.exists && element.isHittable) {
+        func isVisible() -> Bool {
+            guard element.exists, !element.frame.isEmpty, app.frame.contains(element.frame) else { return false }
+            let keyboard = app.keyboards.firstMatch
+            return !keyboard.exists || element.frame.maxY <= keyboard.frame.minY
+        }
+        if scroll && !isVisible() {
             dismissKeyboard(app)
             for _ in 0..<8 {
-                if element.exists && element.isHittable { break }
+                if isVisible() { break }
                 app.swipeUp()
             }
         }
         XCTAssertTrue(element.waitForExistence(timeout: 10), app.debugDescription)
-        element.tap()
+        XCTAssertTrue(isVisible(), app.debugDescription)
+        if element.isHittable {
+            element.tap()
+        } else {
+            // Compose virtual accessibility nodes can have a valid visible frame
+            // without a hit point on iOS 26. Keep the real touch and business assertions.
+            element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
     }
 
     private func fill(_ app: XCUIApplication, identifier: String, value: String) {

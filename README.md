@@ -10,7 +10,8 @@
 - Landing 标题 “Level Up Your Life” 固定单行显示，在手机宽度下不会因自动换行破坏视觉层级
 - 主界面以 Figma Make `t=7USLGNgZqfnofwom-1` 为唯一 UI 基准：英文 Quests/Store/Rewards/Stats 导航、紧凑奖励商店和 Premium 升级提示
 - 免费态可查看默认 Coffee 心愿，锁定任务编辑、新增任务、心愿目标编辑、自定义奖励和 Coffee 购买；即使余额高于价格也不会调用兑换命令
-- iOS 使用 StoreKit 2 核验 `quest_reward_monthly` 的当前 entitlement、交易更新和恢复购买；仅 verified、未撤销、未过期的交易解锁 Premium。月费为 `$1.99/month`，包含 7 天免费试用且无年付
+- iOS 使用 StoreKit 2 核验 `quest_reward_monthly` 的当前 entitlement、交易更新和恢复购买；仅 verified、未撤销、未过期的交易解锁 Premium。美国区月费为 `$1.99/month`，符合 StoreKit 资格的用户显示 7 天免费试用，其余显示 Subscribe；无年付
+- 付费墙提供自动续订说明、恢复购买、隐私政策和 Apple 标准使用条款；Android 明确标注演示订阅不扣费
 - Android 保留会话级演示订阅，未接入 Google Play Billing；关闭进程后恢复免费态
 - 任务、商店、物品栏和统计四个 Compose 页面
 - 新增、编辑、删除和完成自定义、每日、每周、每月任务，周期按设备当地时间 04:00 切换

@@ -32,6 +32,9 @@
 
 ### 2026-09-08 验收前检查
 
+- 34185637618：Xcode 26.2 已编译 Kotlin/Compose 和 Swift；StoreKit 8/8 通过（4.9 秒，包含试用资格断言）。UI 在 Start Free Trial 的文字虚拟节点 not hittable 失败，后续未通过。
+- ✅ 复用 interact 处理 iOS 26 虚拟节点：严格确认真实 frame 完整可见且不在键盘后方后，若系统不提供命中点则点击其中心；保留购买、编辑、恢复等业务结果断言，不通过跳过交互来通过测试。下一轮同时验证已提交的平台超时与文件选择器。
+
 - ✅ iOS 导入复用现有 BackupActions，改由 UIDocumentPicker 选择 JSON，取消不执行导入；选中内容仍调用现有 Application 校验和 Room 原子恢复，不复制恢复规则。平台回调释放 security-scoped 访问，导出文件错误转换为现有失败回调；UI 测试增加真实文件选择步骤。无备份格式或领域接口变化。
 - Android 本轮后续实际结果：App instrumentation 20/20 通过，lintDebug 成功；原签名冲突后测试工具已清理该模拟器安装，未执行手动卸载或数据删除。后续变更仅 iOS 平台/测试，Android 不重复扩大测试。
 
