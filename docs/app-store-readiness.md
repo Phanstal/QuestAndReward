@@ -1,49 +1,39 @@
 # App Store 上架前代码检查
 
-检查日期：2026-09-09。基线：v0.55 (19)，验证分支 `codex/v055-validation`。
-本报告是代码静态检查与测试证据清单，不是 App Store 审核通过声明。
+检查日期：2026-09-09。版本 v0.55 (19)，KMP / Compose / Room v8 架构不变。
 
-## 已核对的配置
+## 已完成的验收
 
-- iOS Release 使用 `com.phanstal.questandreward`，版本 0.55 (19)，最低 iOS 15.0，仅 iPhone；Archive Action 为 Release。
-- Swift StoreKit 2 位于平台边界，共享业务继续采用 Compose/KMP/Room v8。
-- 订阅产品 `quest_reward_monthly`；验证交易签名、产品、过期、撤销及升级状态；启动、前台和交易更新重新核验，恢复调用 AppStore.sync。
-- StoreKit 测试配置在测试 target 资源和 Debug Run scheme 中；不能替代 App Store Connect 产品配置。
-- Info.plist 配置 Compose 所需帧率开关、Documents 文件共享；未声明摄像头、定位等权限。
-- 图标已铺底并实际验证为 1024×1024、Format24bppRgb，无 alpha 通道；正式 Archive 校验仍待完成。
+[完整 CI #37](https://github.com/Phanstal/QuestAndReward/actions/runs/34311554513) 在提交 `b428abb` 上全部通过。
 
-## 尚未完成的代码和验收项
+- Xcode 26.2、iPhone 16 / iOS 26.2：StoreKit 9/9、完整 UI 流程 1/1；xcresult 摘要 10 passed、0 failed、0 skipped。
+- UI 覆盖首次引导、默认 Coffee 提醒、订阅购买、退款后的免费高余额锁定、任务新增编辑完成、奖励新增编辑购买使用出售、Deposit、月任务两次完成、导出、重置取消及确认、系统文件选择导入恢复、软删除、四页导航和重启后 Premium 恢复。
+- KMP 测试通过；无签名设备 Release Archive 成功并核验 PrivacyInfo.xcprivacy；公开隐私政策 HTTP 检查通过。
+- arm64/x86_64 Simulator 合并、版本与启动 plist 核验、安装冷启动及崩溃报告检查通过。Simulator ZIP 不是 IPA；x86_64 已编译并核验架构，实际运行验收在 arm64 上完成。
+- Android API 33：Compose 20/20、Room 30/30；`test lintDebug assembleDebug` 成功，未修改单测复用缓存。Lint 0 errors、42 warnings（35 GradleDependency、6 AndroidGradlePluginVersion、1 OldTargetApi）。
+- Android APK v2 签名验证、覆盖安装、冷启动通过，崩溃日志为空。
 
-| 项目 | 代码证据 / 实际缺口 | 下一步 |
+## 本轮修复原因
+
+- 输入框中间点击不能保证光标在末尾；长按空白处也未出现 Select All。测试改为右端点击、退格、确认旧值为空，再输入并精确核验新值。
+- Files 选择器中文件名点击后 picker 仍打开。测试改点文件 cell 缩略图，并要求出现 Backup imported.，再检查恢复的任务；没有改动业务恢复事务。
+- lipo 输入参数顺序错误已修复；完整门禁默认执行，显式预发布模式仍与正式验收区分。
+
+## 产物校验
+
+| 产物 | 大小 | SHA-256 |
 | --- | --- | --- |
-| 完整 UI 验收 | #35 / 34304175109：StoreKit 9/9 通过，UI 在编辑金额时未找到 Select All，截图确认无菜单 | 已推送字段右端定位、清空断言及输入校验，34308557031 验证中；后续业务流程尚未完整通过 |
-| 试用资格 | 已从真实 StoreKit offer/eligibility 生成；不符合资格显示 Subscribe。Xcode 26.2 StoreKit 8/8 通过，Android 不符合资格文案测试通过 | 继续完整 UI 验收及真实沙盒核验 |
-| 订阅说明和法律链接 | 已增加续订说明、Privacy Policy、Apple 标准 EULA 和打开失败提示；政策按实际本地存储/历史保留编写，并固定到已推送政策版本的永久链接，GitHub API 已确认文件存在 | CI 增加公开网页 HTTP/标题核验；所有者确认实际隐私披露与商店资料 |
-| Privacy manifest | 已添加 PrivacyInfo.xcprivacy 和自有 UserDefaults 的 CA92.1 用途，并加入 Xcode 应用资源 | 清点最终静态链接依赖的 required-reason API、验证 Archive 隐私报告 |
-| 导入交互 | 已改为系统 JSON 文件选择器，取消不导入；复用现有完整校验和原子恢复，Kotlin iOS 编译已通过 | 系统文件选择及实际导入仍待 UI 验收；新增 iOS SQLite 失败回滚测试待执行 |
-| 订阅响应时限 | 商品、资格、权益、恢复请求各 15 秒调用方上限；#35 原生 9/9 通过，包括迟到结果忽略及后续请求恢复测试 | 仍需真机沙盒覆盖断网、认证弹窗与恢复前台 |
-| 系统版本覆盖 | 当前 CI 为 iPhone 16 / iOS 26.2，部署最低版本为 15；34187777245 模拟器启动成功 | 当前系统全功能及最低支持版本兼容性尚未完整验收 |
-| 正式构建 | 已增加无签名 Release device Archive 和 manifest 检查门禁，UI 尚未通过所以尚未执行 | 通过完整模拟器门禁后执行；账号就绪后签名 Archive、验证及 TestFlight |
-| 上传 SDK 要求 | CI 已显式选择 Xcode 26.2 / iOS 26 SDK；34185637618 实际完成 Kotlin/Compose/Swift 编译与 StoreKit 8/8 | 继续完整 UI、Release 构建与运行验证；最低部署仍是 iOS 15 |
-| 上架图标 | 已输出并验证无 alpha 的 1024×1024 RGB 图标 | 验证正式包资产 |
+| Android Debug APK | 28,399,816 bytes | `DA9B9F8F6EE714C9C6A164739DD1AB35E4583663982C872042927D1041300B3D` |
+| #37 iOS Simulator ZIP | 40,793,654 bytes | `39B2D564F258D9DB731CE06FA67E1BAAD19A3FCCD02635959519B24DE7C324B0` |
 
-## 需要所有者提供的资料
+ZIP 已下载，本地 SHA-256 与 CI 日志一致。#34 的旧预发布 ZIP SHA 为 `729335f4552de99e7453fea67c4cb4e604b0b7e040cc920d06698eac510d7cdc`，不要与本轮混淆。
 
-Apple Developer 会员及 Team；App Store Connect 同 ID 月订阅、美国区 $1.99 价格和 7 天试用；协议、税务、收款；CI 签名与上传凭证（仅存 Secrets）；真实隐私政策和支持地址、商店及隐私披露资料；TestFlight 真机测试人员。
+## 尚未完成的 App Store 项目
 
-这些资料不阻挡模拟器验收。当前没有签名 IPA，也不具备“仅填账号即可上线”的证据。
+- Apple Developer Team、证书、provisioning profile、签名 Archive/IPA、TestFlight 上传与真机验收。
+- App Store Connect 创建 `quest_reward_monthly`，配置美国区 $1.99 月费、7 天试用、协议、税务、收款及真实沙盒测试。
+- 最低 iOS 15 的运行验证及真实设备/网络中断/Apple 认证交互覆盖；本轮模拟器通过不代表所有系统版本通过。
+- 最终静态链接依赖的 required-reason API 清点和隐私报告审核。现有 manifest 声明自有 UserDefaults CA92.1、无跟踪；plist 格式验证不等于完整隐私审核。
+- 所有者确认隐私披露、支持联系方式、商店截图与文案等上架资料。
 
-Apple 上传 SDK 与 required-reason API 要求来源：[Upcoming Requirements](https://developer.apple.com/news/upcoming-requirements/)，本轮实际读取日期 2026-09-08。
-
-## 测试覆盖边界
-
-- #34 / 34304117045 为用户授权的手动测试包构建，已成功构建 arm64/x86_64 Simulator 包、安装冷启动、校验版本及启动 plist，并发布 v0.55 prerelease。该模式跳过完整 UI 和设备 Archive，不等于完成正式验收。
-- 已发布 Simulator ZIP 为 40,793,671 字节，CI 与 GitHub 资产 SHA-256 一致：`729335f4552de99e7453fea67c4cb4e604b0b7e040cc920d06698eac510d7cdc`。Release 源码为 4e2288c，后续测试脚本修正位于验证分支。
-
-- 当前 XCUITest 单一长流程包含引导、每日提醒、Weekly 展示、免费商店锁定、订阅、Daily 自定义任务编辑完成、奖励编辑购买使用出售、心愿切换、备份重置恢复、删除及重启权益。
-- 源码中存在测试步骤不代表执行通过；该长流程会在第一个失败处停止。
-- 原生 StoreKit 测试覆盖恢复购买、过期和退款降级，但尚未通过 UI 操作验证全部对应情形。
-- 已扩展月任务频次、Deposit、免费高余额购买锁定的 iOS UI 步骤，尚待实际运行；新增 iOS 独立临时 Room 数据库测试验证非法备份及恢复冲突后完整快照不变，尚未执行，不能称为 iOS 已验收。
-- Android 本轮 JVM test 成功（未变更项复用缓存），Room 30/30、Compose 20/20、lintDebug、assembleDebug 成功；API 33 安装冷启动成功、crash buffer 为空。
-- 最后一次 Android Lint：0 errors、1 条既有 OldTargetApi 警告（target 33）；不属于零警告。
-- 当前 Android APK：0.55 (19)，28,399,812 字节，v2 签名有效；SHA-256 `B6E71312A90AAFCBD5806E19861E0C1F95A5D0B365AF75BC4A551EDB2D4347D6`。本轮重新安装及冷启动成功，进程存活、crash buffer 为空。
+现阶段可以进行本地模拟器测试和开发者账号/商店配置准备，但不能宣称已经可以直接提交 App Store 上线。

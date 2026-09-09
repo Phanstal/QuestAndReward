@@ -16,6 +16,13 @@
 
 ## 追加检查
 
+### 2026-09-09 最终实际结果（优先于下方历史记录）
+
+- ✅ 完整运行 34311554513 / b428abb 全绿：KMP、StoreKit 9/9、完整 UI 1/1（425.029 秒）、无签名 Release Archive、隐私政策网页、arm64/x86_64 Simulator、安装冷启动、plist 和打包检查通过。已下载 xcresult 摘要确认 10 passed / 0 failed / 0 skipped。
+- ✅ 当前 Android test/lintDebug/assembleDebug 成功，Compose 20/20、Room 30/30 重跑通过；APK v2 签名有效，安装冷启动成功，crash buffer 为空。Lint 0 错误、42 条升级类及 target SDK 警告，非零警告。
+- ✅ 本轮最终产物大小和 SHA-256 见 app-store-readiness.md，iOS ZIP 本地哈希与 CI 日志一致。生产源码未因输入/文件选择测试修复改变，所有既有业务断言保留，未使用数据库或订阅测试后门。
+- ⏳ 未完成项目仍为 Apple 签名/真实商店及真机、最低系统运行覆盖和最终依赖隐私审核；不能将无签名 Archive 与模拟器验收当成 App Store 可直接上线。
+
 - 34308557031：原生 StoreKit 9/9 通过；UI 已通过编辑字段清空/替换、任务完成、高余额退款锁定、奖励使用出售、月任务两次完成、导出及重置。失败截图仍为 Files picker，JSON 文件 cell 可用；没有进入恢复后的任务页。✅ 本轮仅调整测试点击真实文件 cell 的缩略图并等待 Backup imported.，成功后才导航和断言恢复数据；不改生产导入逻辑，不放宽原有历史/任务断言。独立静态门禁通过后重跑完整验收。
 
 - ✅ #35 证据核查及输入修复静态门禁：已下载实际截图，金额文本在左端、长按字段中心位于空白处，截图无选择菜单；金额框完整可见且获得焦点。测试改为点击字段右端定位，再退格并独立等待 label 为空，最后输入并保留精确内容断言。仅 XCUITest 与报告变化，无生产/数据库/领域/订阅修改；效果必须经新一轮完整 CI 验证。保留用户 log/ 文件，不提交崩溃报告。
@@ -122,7 +129,7 @@
 - ✅ 补充 UI 定位静态检查：`RewardsContent` 使用 LazyColumn，底部 Add New Reward 不保证已进入可访问性树。购买和重启的 Premium 状态断言改为首屏仅 Premium 可见的 Edit Specialty Coffee；后续仍实际滚动点击 Add New Reward 并创建奖励，不删减功能验收。
 - 第七轮 `34116791196` 和第八轮 `34118805464` 均在分配 runner 前失败，steps 为空。第八轮 GitHub annotation 明确提示：`The job was not started because recent account payments have failed or your spending limit needs to be increased.` 因此 `5a0a29c` / `4c0cd59` 的测试修改尚未获得运行验证。需仓库所有者处理 Settings > Billing & plans 后重跑；未合并 main、未发布 v0.55。
 
-本节只记录实际执行结果，当前不预填通过：
+以下为此前轮次的历史结果；2026-09-09 最终状态以本报告“最终实际结果”及 app-store-readiness.md 为准：
 
 | 验证项 | 当前状态 |
 | :--- | :--- |

@@ -4,6 +4,8 @@
 
 当前开发版本为 `v0.55`（Android `versionCode = 19`，iOS `CURRENT_PROJECT_VERSION = 19`），Room 数据库版本为 `v8`。
 
+2026-09-09：[完整 iOS 验收 #37](https://github.com/Phanstal/QuestAndReward/actions/runs/34311554513) 已通过，含 StoreKit 9 项、完整 UI 流程、无签名 Release Archive、双架构 Simulator 构建与冷启动。Android Compose 20 项和 Room 30 项回归通过。签名 IPA、TestFlight/真机及商店配置仍待完成，详见 [上架检查清单](docs/app-store-readiness.md)。
+
 ## 当前功能
 
 - 首次启动依次展示品牌欢迎页和四步功能引导，完成后进入主界面
