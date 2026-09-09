@@ -273,10 +273,21 @@ final class QuestAndRewardUITests: XCTestCase {
             )
             XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 10), .completed, app.debugDescription)
         }
-        // Compose's virtual TextView exposes its text in label; value can be
-        // an empty string even when the field contains the default amount.
+        // A tap places the caret within existing text. Backspace counts cannot
+        // reliably replace it; use the actual system selection command instead.
         let oldValue = field.label
-        app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count) + value)
+        if !oldValue.isEmpty {
+            field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+                .press(forDuration: 1.2)
+            let selectAll = app.descendants(matching: .any).matching(NSPredicate(
+                format: "label == %@ AND (elementType == %d OR elementType == %d)",
+                "Select All", XCUIElement.ElementType.button.rawValue,
+                XCUIElement.ElementType.menuItem.rawValue
+            )).firstMatch
+            XCTAssertTrue(selectAll.waitForExistence(timeout: 5), app.debugDescription)
+            selectAll.tap()
+        }
+        app.typeText(value)
         let updatedText = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in
                 field.label == value || field.value as? String == value
