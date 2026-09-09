@@ -168,7 +168,7 @@ jobs:
             "$arm_app/QuestAndReward" \
             "$x64_app/QuestAndReward" \
             -output "$universal_app/QuestAndReward"
-          lipo -verify_arch arm64 x86_64 "$universal_app/QuestAndReward"
+          lipo "$universal_app/QuestAndReward" -verify_arch arm64 x86_64
 
       - name: Install and cold launch
         shell: bash
