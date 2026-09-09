@@ -273,19 +273,17 @@ final class QuestAndRewardUITests: XCTestCase {
             )
             XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 10), .completed, app.debugDescription)
         }
-        // A tap places the caret within existing text. Backspace counts cannot
-        // reliably replace it; use the actual system selection command instead.
+        // The center of a wide field may be inside text or empty padding; a
+        // long press there need not expose a selection menu. Tap the trailing
+        // editable edge and verify deletion separately before typing new text.
         let oldValue = field.label
         if !oldValue.isEmpty {
-            field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-                .press(forDuration: 1.2)
-            let selectAll = app.descendants(matching: .any).matching(NSPredicate(
-                format: "label == %@ AND (elementType == %d OR elementType == %d)",
-                "Select All", XCUIElement.ElementType.button.rawValue,
-                XCUIElement.ElementType.menuItem.rawValue
-            )).firstMatch
-            XCTAssertTrue(selectAll.waitForExistence(timeout: 5), app.debugDescription)
-            selectAll.tap()
+            field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+            app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count))
+            let cleared = XCTNSPredicateExpectation(
+                predicate: NSPredicate { _, _ in field.label.isEmpty }, object: field
+            )
+            XCTAssertEqual(XCTWaiter.wait(for: [cleared], timeout: 10), .completed, app.debugDescription)
         }
         app.typeText(value)
         let updatedText = XCTNSPredicateExpectation(
