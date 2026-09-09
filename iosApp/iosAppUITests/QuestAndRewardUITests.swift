@@ -169,9 +169,13 @@ final class QuestAndRewardUITests: XCTestCase {
         tap(app, "Reset Anyway")
         if app.staticTexts["Got it"].waitForExistence(timeout: 5) { tap(app, "Got it") }
         tap(app, "📤 Import Data", scroll: true)
-        let backupFile = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "quest-backup-")).firstMatch
+        let backupFile = app.cells.matching(NSPredicate(format: "label BEGINSWITH %@", "quest-backup-")).firstMatch
         XCTAssertTrue(backupFile.waitForExistence(timeout: 15), app.debugDescription)
-        backupFile.tap()
+        XCTAssertTrue(backupFile.isEnabled)
+        // Files exposes the filename separately from the activatable file tile.
+        // Tap its thumbnail and require successful restore before leaving Stats.
+        backupFile.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
+        XCTAssertTrue(app.staticTexts["Backup imported."].waitForExistence(timeout: 15), app.debugDescription)
         tap(app, "Quests")
         XCTAssertTrue(app.staticTexts["Verified Quest"].waitForExistence(timeout: 10))
         tap(app, "Verified Quest")

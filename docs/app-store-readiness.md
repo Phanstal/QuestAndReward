@@ -1,6 +1,6 @@
 # App Store 上架前代码检查
 
-检查日期：2026-09-08。基线：v0.55 (19)，验证分支 `codex/v055-validation`。
+检查日期：2026-09-09。基线：v0.55 (19)，验证分支 `codex/v055-validation`。
 本报告是代码静态检查与测试证据清单，不是 App Store 审核通过声明。
 
 ## 已核对的配置
@@ -16,12 +16,12 @@
 
 | 项目 | 代码证据 / 实际缺口 | 下一步 |
 | --- | --- | --- |
-| 完整 UI 验收 | 34187777245 的 KMP 和模拟器启动通过；Swift 因 Transaction 类型歧义编译失败，StoreKit/UI 未执行 | 已在 f8b9806 限定 StoreKit.Transaction；Git HTTPS 连续连接失败，修复及新增 iOS 回滚测试尚未推送验证 |
+| 完整 UI 验收 | #35 / 34304175109：StoreKit 9/9 通过，UI 在编辑金额时未找到 Select All，截图确认无菜单 | 已推送字段右端定位、清空断言及输入校验，34308557031 验证中；后续业务流程尚未完整通过 |
 | 试用资格 | 已从真实 StoreKit offer/eligibility 生成；不符合资格显示 Subscribe。Xcode 26.2 StoreKit 8/8 通过，Android 不符合资格文案测试通过 | 继续完整 UI 验收及真实沙盒核验 |
 | 订阅说明和法律链接 | 已增加续订说明、Privacy Policy、Apple 标准 EULA 和打开失败提示；政策按实际本地存储/历史保留编写，并固定到已推送政策版本的永久链接，GitHub API 已确认文件存在 | CI 增加公开网页 HTTP/标题核验；所有者确认实际隐私披露与商店资料 |
 | Privacy manifest | 已添加 PrivacyInfo.xcprivacy 和自有 UserDefaults 的 CA92.1 用途，并加入 Xcode 应用资源 | 清点最终静态链接依赖的 required-reason API、验证 Archive 隐私报告 |
 | 导入交互 | 已改为系统 JSON 文件选择器，取消不导入；复用现有完整校验和原子恢复，Kotlin iOS 编译已通过 | 系统文件选择及实际导入仍待 UI 验收；新增 iOS SQLite 失败回滚测试待执行 |
-| 订阅响应时限 | 已改为只恢复一次的 continuation 竞速；商品、资格、权益、恢复请求各 15 秒调用方上限，迟到结果忽略；添加相关原生测试 | 尚待测试，并需真机沙盒覆盖断网、认证弹窗与恢复前台 |
+| 订阅响应时限 | 商品、资格、权益、恢复请求各 15 秒调用方上限；#35 原生 9/9 通过，包括迟到结果忽略及后续请求恢复测试 | 仍需真机沙盒覆盖断网、认证弹窗与恢复前台 |
 | 系统版本覆盖 | 当前 CI 为 iPhone 16 / iOS 26.2，部署最低版本为 15；34187777245 模拟器启动成功 | 当前系统全功能及最低支持版本兼容性尚未完整验收 |
 | 正式构建 | 已增加无签名 Release device Archive 和 manifest 检查门禁，UI 尚未通过所以尚未执行 | 通过完整模拟器门禁后执行；账号就绪后签名 Archive、验证及 TestFlight |
 | 上传 SDK 要求 | CI 已显式选择 Xcode 26.2 / iOS 26 SDK；34185637618 实际完成 Kotlin/Compose/Swift 编译与 StoreKit 8/8 | 继续完整 UI、Release 构建与运行验证；最低部署仍是 iOS 15 |
@@ -36,6 +36,9 @@ Apple Developer 会员及 Team；App Store Connect 同 ID 月订阅、美国区 
 Apple 上传 SDK 与 required-reason API 要求来源：[Upcoming Requirements](https://developer.apple.com/news/upcoming-requirements/)，本轮实际读取日期 2026-09-08。
 
 ## 测试覆盖边界
+
+- #34 / 34304117045 为用户授权的手动测试包构建，已成功构建 arm64/x86_64 Simulator 包、安装冷启动、校验版本及启动 plist，并发布 v0.55 prerelease。该模式跳过完整 UI 和设备 Archive，不等于完成正式验收。
+- 已发布 Simulator ZIP 为 40,793,671 字节，CI 与 GitHub 资产 SHA-256 一致：`729335f4552de99e7453fea67c4cb4e604b0b7e040cc920d06698eac510d7cdc`。Release 源码为 4e2288c，后续测试脚本修正位于验证分支。
 
 - 当前 XCUITest 单一长流程包含引导、每日提醒、Weekly 展示、免费商店锁定、订阅、Daily 自定义任务编辑完成、奖励编辑购买使用出售、心愿切换、备份重置恢复、删除及重启权益。
 - 源码中存在测试步骤不代表执行通过；该长流程会在第一个失败处停止。
