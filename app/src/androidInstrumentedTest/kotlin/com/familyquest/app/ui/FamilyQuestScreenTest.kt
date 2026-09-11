@@ -88,7 +88,7 @@ class FamilyQuestScreenTest {
         composeRule.onAllNodesWithText("每周任务").assertCountEquals(0)
         composeRule.onAllNodesWithText("每月任务").assertCountEquals(0)
         composeRule.onNodeWithText("Set Your First Daily Quest").assertIsDisplayed()
-        composeRule.onAllNodesWithText("🔒").assertCountEquals(2)
+        composeRule.onAllNodesWithText("🔒").assertCountEquals(1)
 
         composeRule.onNodeWithText("📆 Weekly").performClick()
         composeRule.onNodeWithText("每周任务").assertIsDisplayed()
@@ -132,7 +132,7 @@ class FamilyQuestScreenTest {
             }
         }
 
-        composeRule.onNodeWithText("Wish Goal — Premium Feature", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("No wish goal set", substring = true).assertIsDisplayed()
         unlockPremium()
 
         composeRule.runOnIdle { state.value = state.value.copy(wishGoalRewardId = "reward") }
@@ -368,7 +368,7 @@ class FamilyQuestScreenTest {
         setScreen(state, RecordingUiRepository())
 
         composeRule.onNodeWithText("Store").performClick()
-        composeRule.onNodeWithText("电影之夜").assertIsDisplayed()
+        composeRule.onAllNodesWithText("电影之夜").assertCountEquals(0)
         composeRule.onNodeWithText("Upgrade to Premium to create your own rewards!").assertIsDisplayed()
         composeRule.onAllNodesWithContentDescription("Remove 电影之夜 wish goal").assertCountEquals(0)
         unlockPremiumFromStore()
@@ -603,6 +603,24 @@ class FamilyQuestScreenTest {
         composeRule.onAllNodesWithText("+30 🪙").assertCountEquals(0)
     }
 
+    @Test
+    fun freeUsersCanPinOnlyExistingCoffeeWithoutUnlockingPurchases() {
+        val repository = RecordingUiRepository()
+        val coffee = Reward("seed-reward-coffee", "Specialty Coffee", "", 500, null, true, 0, "☕")
+        val movie = Reward("movie", "Movie Night", "", 100, null, true, 0, "🎬")
+        setScreen(MainUiState(
+            balance = 1000,
+            rewardOptions = listOf(RewardPurchaseOption(movie, null), RewardPurchaseOption(coffee, null)),
+        ), repository)
+        composeRule.onNodeWithText("No wish goal set", substring = true).performClick()
+        composeRule.onAllNodesWithText("Movie Night").assertCountEquals(0)
+        composeRule.onNodeWithTag("buy-reward-Specialty Coffee").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Set Specialty Coffee as wish goal").performClick()
+        composeRule.waitUntil { repository.pinnedRewardId == coffee.id }
+        composeRule.onAllNodesWithText("Start Free Trial").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Deposit", substring = true).assertCountEquals(0)
+    }
+
     private fun unlockPremium() {
         composeRule.onNodeWithText("Tap to edit & customize quests", substring = true).performClick()
         composeRule.onNodeWithText("See Plans").performClick()
@@ -705,6 +723,11 @@ private data class TaskUpdateCall(
 )
 
 private class RecordingUiRepository : FamilyQuestRepository {
+    var pinnedRewardId: String? = null
+    override suspend fun setWishGoal(rewardId: String?, metadata: CommandMetadata): OperationResult {
+        pinnedRewardId = rewardId
+        return OperationResult.Success
+    }
     override val profiles: Flow<List<Profile>> = flowOf(emptyList())
     override val rewards: Flow<List<Reward>> = flowOf(emptyList())
     override val selectedProfileId = MutableStateFlow<String?>(null)

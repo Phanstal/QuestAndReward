@@ -1,5 +1,13 @@
 # AI 架构合规性自检报告
 
+## 当前候选：QuestReward v0.56 (20)，2026-09-11
+
+本轮按 `architecture-spec.md` 完成静态检查后执行测试。✅ 可靠性：Pin 和旧押金退款复用命令超时、幂等键、Room 原子事务；导入退款也处于恢复事务中。✅ 扩展性：不新增平台业务实现或公共 API。✅ 可维护性：沿用 traceId 和兼容事件，私有 Coffee 恢复函数改为描述真实用途的名称。✅ 分层：共享 Compose 经 ViewModel/Application 调用，免费态只展示和 Pin seed Coffee，仍禁止购买。✅ 复用：沿用 wish goal、ledger、processed commands 和备份格式，未创建重复基础模块。Room v8、事件 v1、备份 v3 和应用技术标识不变。
+
+新装及重置为空愿望；取消 Deposit 与兑换赠币；存量未结算 Deposit 通过账本返还一次，已有目标和历史保留。测试已取得 JVM 成功、Room 31/31、Compose 21/21；最终清理后的重跑、Lint、APK 与 iOS CI 尚待验证。以下 v0.55 内容为历史验收记录，不代表 v0.56 已通过 iOS 验收。
+
+最终 Android 重跑：`test :data:connectedDebugAndroidTest :app:connectedDebugAndroidTest lintDebug` 成功，Room 31/31、Compose 21/21、Lint 0 errors / 43 warnings；随后 `assembleDebug` 成功。APK 0.56 (20)、显示名 QuestReward、包名 com.familyquest.app、minSdk 26 / targetSdk 33，v2 签名通过，28,400,303 bytes，SHA-256 `1B661F52101ACE3370AB4CABDD4623B4EBA8C675C73928D55122FB8325098764`。API 33 模拟器覆盖安装成功，冷启动 Status: ok。iOS 本轮仍待 CI 实际结果。
+
 检查日期：2026-09-08
 检查对象：QuestAndReward v0.55 Kotlin Multiplatform 测试前候选版本
 检查范围：Android/iOS 构建、共享 Compose、Domain/Application/Sync/Data、Room KMP v8、StoreKit 2 平台适配器、备份与事件兼容
@@ -15,6 +23,13 @@
 | 杜绝重复造轮子 | 检索并复用稳定实现 | ✅ | 已扫描 common、shared-kernel、base 和 Util/Helper/Converter/Client 命名，没有可复用的自有公共层。订阅直接使用 StoreKit 2 与 StoreKitTest；状态分发复用 StateFlow/ObservableObject；动画复用 Compose `animateFloatAsState`、`tween` 和 `FastOutSlowInEasing`，没有另建计时器或平行业务实现。 |
 
 ## 追加检查
+
+### v0.56 QuestReward 静态门禁（2026-09-11）
+
+- ✅ 按 PDF 和用户确认：免费用户仅能置顶种子 Coffee；新增置顶不扣押金，兑换不再生成 100 金币奖励；保留历史事件和旧押金字段兼容备份。
+- ✅ 押金退款复用现有 Room 事务/账本/幂等标记及 WISH_GOAL_UPDATED 事件；启动仅执行一次，旧备份恢复在同一恢复事务中退回尚未抵扣押金。失败保持原子回滚，不改 schema v8。
+- ✅ 首次安装及重置不创建默认心愿；共享 UI/ViewModel 仍通过 Application 调用，品牌显示改 QuestReward，原包标识/StoreKit 产品/数据库路径保留以支持覆盖升级。
+- ✅ 复用现有种子恢复、备份和 Pin 命令，不增加平行业务层；补充退款幂等和无额外奖励断言。本节仅为测试前静态结论，v0.56 测试结果未预填。
 
 ### 2026-09-09 最终实际结果（优先于下方历史记录）
 

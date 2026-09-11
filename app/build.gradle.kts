@@ -65,8 +65,8 @@ android {
         applicationId = "com.familyquest.app"
         minSdk = 26
         targetSdk = 33
-        versionCode = 19
-        versionName = "0.55"
+        versionCode = 20
+        versionName = "0.56"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

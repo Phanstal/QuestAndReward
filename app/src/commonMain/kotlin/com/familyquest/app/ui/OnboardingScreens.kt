@@ -154,7 +154,7 @@ private fun LandingScreen(onNext: () -> Unit) {
                         .testTag("first-run-headline"),
                 )
                 Text(
-                    text = "QUESTANDREWARD",
+                    text = "QUESTREWARD",
                     color = MagicPurple.copy(alpha = 0.88f),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,

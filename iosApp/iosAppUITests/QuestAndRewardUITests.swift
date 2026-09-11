@@ -38,13 +38,13 @@ final class QuestAndRewardUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Skip"].waitForExistence(timeout: 5))
         tap(app, "Skip")
 
-        XCTAssertTrue(
-            app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Today's Goal"))
-                .firstMatch.waitForExistence(timeout: 20)
-        )
-        XCTAssertTrue(app.staticTexts["Specialty Coffee"].firstMatch.exists)
-        capture("Default Coffee reminder")
-        tap(app, "Got it")
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "No wish goal set")).firstMatch.waitForExistence(timeout: 20))
+        tap(app, "Store")
+        tapLabel(app, "Set Specialty Coffee as wish goal")
+        XCTAssertTrue(app.staticTexts["120"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Remove Specialty Coffee wish goal")).firstMatch.waitForExistence(timeout: 10))
+        tap(app, "Quests")
+        if app.staticTexts["Got it"].waitForExistence(timeout: 5) { tap(app, "Got it") }
         XCTAssertTrue(app.staticTexts["Today's Quests"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Morning Exercise"].exists)
 
@@ -112,6 +112,7 @@ final class QuestAndRewardUITests: XCTestCase {
         try session.buyProduct(productIdentifier: "quest_reward_monthly")
         assertPremiumStore(app)
         tapIdentifier(app, "buy-reward-Specialty Coffee")
+        XCTAssertTrue(app.staticTexts["120"].waitForExistence(timeout: 10))
         tap(app, "Rewards")
         XCTAssertTrue(app.staticTexts["Specialty Coffee"].waitForExistence(timeout: 10))
         capture("Purchased Coffee inventory")
@@ -129,7 +130,7 @@ final class QuestAndRewardUITests: XCTestCase {
         tap(app, "Save", scroll: true)
         tapLabel(app, "Set Verified Reward as wish goal", scroll: true)
         if app.staticTexts["Got it"].waitForExistence(timeout: 3) { tap(app, "Got it") }
-        XCTAssertTrue(app.staticTexts["🔒 Deposit: 1🪙 · +100 on redeem"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Deposit:")).firstMatch.exists)
         tapIdentifier(app, "buy-reward-Verified Reward", scroll: true)
         tap(app, "Rewards")
         XCTAssertTrue(app.staticTexts["Verified Reward"].waitForExistence(timeout: 10))

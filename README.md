@@ -1,8 +1,10 @@
-# QuestAndReward
+# QuestReward
 
 一个同时支持 Android 和 iOS 的本地优先游戏化任务与奖励应用。项目使用 Kotlin Multiplatform、Compose Multiplatform 和 Room KMP，共享业务规则、数据层、ViewModel 与界面；平台工程负责启动、文件访问、系统偏好与订阅适配。
 
-当前开发版本为 `v0.55`（Android `versionCode = 19`，iOS `CURRENT_PROJECT_VERSION = 19`），Room 数据库版本为 `v8`。
+当前开发版本为 `v0.56`（Android/iOS build 20），Room 数据库版本为 `v8`。品牌显示为 QuestReward；仓库、工程路径、包标识与订阅产品 ID 保留，支持原安装覆盖升级。
+
+v0.56 按 20260911 PDF 更新：首次安装及重置后心愿为空，点击空心愿卡前往 Store；免费用户只能置顶已有的 Specialty Coffee，Premium 可置顶其他奖励。Pin Goal 不再收取押金，心愿兑换不再额外奖励 100 金币。升级时退回当前尚未抵扣的旧押金；旧备份恢复也在原子事务中退款，历史账本及已发放奖励保留。下文 v0.55 验收记录属于历史版本，不能作为 v0.56 已通过的证明。
 
 2026-09-09：[完整 iOS 验收 #37](https://github.com/Phanstal/QuestAndReward/actions/runs/34311554513) 已通过，含 StoreKit 9 项、完整 UI 流程、无签名 Release Archive、双架构 Simulator 构建与冷启动。Android Compose 20 项和 Room 30 项回归通过。签名 IPA、TestFlight/真机及商店配置仍待完成，详见 [上架检查清单](docs/app-store-readiness.md)。
 
@@ -11,7 +13,7 @@
 - 首次启动依次展示品牌欢迎页和四步功能引导，完成后进入主界面
 - Landing 标题 “Level Up Your Life” 固定单行显示，在手机宽度下不会因自动换行破坏视觉层级
 - 主界面以 Figma Make `t=7USLGNgZqfnofwom-1` 为唯一 UI 基准：英文 Quests/Store/Rewards/Stats 导航、紧凑奖励商店和 Premium 升级提示
-- 免费态可查看默认 Coffee 心愿，锁定任务编辑、新增任务、心愿目标编辑、自定义奖励和 Coffee 购买；即使余额高于价格也不会调用兑换命令
+- 免费态只显示已有种子 Coffee，允许置顶/取消；任务编辑、新增、自定义奖励和购买仍锁定，即使余额充足也不能购买
 - iOS 使用 StoreKit 2 核验 `quest_reward_monthly` 的当前 entitlement、交易更新和恢复购买；仅 verified、未撤销、未过期的交易解锁 Premium。美国区月费为 `$1.99/month`，符合 StoreKit 资格的用户显示 7 天免费试用，其余显示 Subscribe；无年付
 - 付费墙提供自动续订说明、恢复购买、隐私政策和 Apple 标准使用条款；Android 明确标注演示订阅不扣费
 - Android 保留会话级演示订阅，未接入 Google Play Billing；关闭进程后恢复免费态
@@ -20,9 +22,9 @@
 - 每日和每周任务的截止时间使用 5 分钟步进选择器；每周可选择执行日；每月任务可设置每月完成 `1-8` 次。排期用于记录和展示，不限制任务完成时间
 - 月任务编辑器提供两行 `1×` 至 `8×` 直选按钮；任务与奖励 emoji 选择器每行 8 个
 - 完成任务获得金币和经验，撤销完成会扣回对应金币与经验
-- 商店奖励可设为或取消心愿；设置目标时按奖励价格的 10%（向下取整）扣除 Deposit，目标固定显示在任务页并展示余额进度
-- 心愿奖励兑换时只扣除 `cost - deposit`，额外奖励 100 金币；取消或切换目标不退还旧 Deposit，允许余额变为负数
-- Premium 心愿目标在任务页使用浅色进度卡，展示 Deposit、剩余金币和预计天数；每日提醒使用居中详情卡，可选择 “Got it” 或 “Go Complete Quests →”
+- 商店奖励可置顶或取消心愿，不扣金币；Premium 可选择任意奖励，免费用户仅限种子 Coffee
+- 心愿兑换扣除完整价格，不再产生额外奖励；旧的尚未抵扣押金在升级或旧备份恢复时原子退回
+- 心愿卡展示余额进度、剩余金币和预计天数，不显示押金；手动置顶后才出现每日提醒
 - 新增、编辑、软删除和购买奖励；编辑器删除会立即关闭并提交软删除命令，不再增加二次确认
 - 商店前三个目录奖励使用铜、银、金边框，第三个带金色光晕；心愿奖励满足余额时显示 “🎉 Redeem”
 - Rewards 使用固定两列网格；奖励可在深色确认卡中使用，或按原价 70% 出售
@@ -30,8 +32,8 @@
 - Stats 展示 Balance、Total Earned、Done Today、All Time、最近完成记录、Quest Harvest Board 和 Wish Savings Board；完成记录不提供 UI 撤销入口
 - Stats 可导入、导出完整 JSON 备份 v3（兼容读取 v2）；选择导入文件后立即进行完整校验与原子恢复，不再显示二次确认
 - 待同步事件 NDJSON 的底层接口继续保留以兼容未来同步，但当前版本已无用户界面入口
-- 全新数据库初始化 3 条英文预置任务与 3 个奖励，初始金币和 Total Earned 均为 120；Coffee（Specialty Coffee，500 金币）默认成为 Deposit 为 0 的愿望目标
-- v0.55 目录迁移仅在没有愿望时补齐一次 Coffee，不覆盖已有愿望；用户此后主动取消不会在下次启动被重新创建。数据重置会恢复可用的标准 Coffee 愿望并清除进度
+- 全新数据库初始化 3 条英文预置任务与 3 个奖励，初始金币和 Total Earned 均为 120；心愿区域为空，Coffee（500 金币）需要用户在 Store 主动置顶
+- 升级保留已置顶愿望，不自动创建新目标；数据重置恢复标准 Coffee 奖励但不置顶。旧押金只返还尚未结算部分，不改写已发生的历史账本
 - 任务进度、愿望卡和每日愿望提醒均使用 500ms FastOutSlowIn 缓动，并把显示值限制在 `0..1`
 - Android 与 iOS 共用同一套 Compose 页面、Application Service、周期规则、Room schema 和备份协议
 - Android 使用 Storage Access Framework 选择导入/导出文件；iOS 将备份放在应用 Documents，并导入其中最新的 `quest-backup-*.json`
@@ -49,7 +51,7 @@
 
 每次业务写入都携带 `idempotencyKey` 和 `traceId`，并在同一个 Room 事务中更新本地投影、追加积分账本、写入事件及保存命令结果。相同幂等键的重试直接返回首次结果。
 
-事件编解码器为未来 NAS 网关提供以下设备隔离的单事件目标路径；当前 UI 实际导出的是一个 NDJSON 文件，并不会直接写入该目录：
+事件编解码器为未来 NAS 网关提供以下设备隔离的单事件目标路径；NDJSON 仅保留底层接口，没有 UI 导出入口，也不会直接写入该目录：
 
 ```text
 events/<device-id>/<event-id>.json

@@ -133,6 +133,7 @@ class RoomFamilyQuestRepository(
         migrateLegacyWishGoal(mutableSelectedProfileId.value)
         migrateSeedCatalog(metadata)
         migrateDefaultWishGoal(metadata)
+        refundLegacyWishDeposits(metadata)
         return OperationResult.Success
     }
 
@@ -225,10 +226,9 @@ class RoomFamilyQuestRepository(
                     payload = rewardPayload(reward),
                 )
             }
-            ensureDefaultWishGoal(
+            ensureCoffeeReward(
                 profileId = SEED_PROFILE_ID,
                 metadata = metadata.forSeed("default-wish"),
-                reason = "FRESH_INSTALL",
                 restoreCanonicalReward = false,
             )
             markSeedMigration(CATALOG_MIGRATION_KEY, metadata.traceId)
@@ -309,20 +309,8 @@ class RoomFamilyQuestRepository(
                     ),
                 )
             }
-            val deposit = reward.cost / 10
-            val now = Clock.System.now().toEpochMilliseconds()
+            val deposit = 0
             dao.upsertWishGoal(WishGoalEntity(profileId, rewardId, deposit))
-            dao.insertLedgerEntry(
-                LedgerEntryEntity(
-                    id = newId(),
-                    profileId = profileId,
-                    delta = -deposit,
-                    reason = LedgerReason.WISH_GOAL_DEPOSITED.name,
-                    referenceId = rewardId,
-                    label = "Wish goal deposit: ${reward.name}",
-                    createdAt = now,
-                ),
-            )
             recordEvent(
                 metadata = metadata,
                 actorId = profileId,
@@ -837,17 +825,6 @@ class RoomFamilyQuestRepository(
                     createdAt = now,
                 ),
             )
-            dao.insertLedgerEntry(
-                LedgerEntryEntity(
-                    id = newId(),
-                    profileId = profileId,
-                    delta = WISH_GOAL_REDEEM_BONUS,
-                    reason = LedgerReason.WISH_GOAL_REDEEM_BONUS.name,
-                    referenceId = redemptionId,
-                    label = "Wish goal redemption bonus",
-                    createdAt = now,
-                ),
-            )
             dao.deleteWishGoal(profileId)
         }
         if (reward.stock != null) {
@@ -865,7 +842,7 @@ class RoomFamilyQuestRepository(
                 "cost" to EventValue.Integer(reward.cost.toLong()),
                 "effectiveCost" to EventValue.Integer(effectiveCost.toLong()),
                 "wishDeposit" to EventValue.Integer((wishGoal?.deposit ?: 0).toLong()),
-                "wishBonus" to EventValue.Integer(if (wishGoal == null) 0 else WISH_GOAL_REDEEM_BONUS.toLong()),
+                "wishBonus" to EventValue.Integer(0),
                 "profileId" to EventValue.Text(profileId),
                 "emoji" to EventValue.Text(reward.emoji),
                 "inventoryState" to EventValue.Text(INVENTORY_OWNED),
@@ -1027,10 +1004,9 @@ class RoomFamilyQuestRepository(
             )
             if (existing == null) dao.insertTask(resetTask) else dao.updateTask(resetTask)
         }
-        ensureDefaultWishGoal(
+        ensureCoffeeReward(
             profileId = profileId,
             metadata = metadata.forSeed("default-wish"),
-            reason = "DATA_RESET",
             restoreCanonicalReward = true,
         )
 
@@ -1143,6 +1119,7 @@ class RoomFamilyQuestRepository(
                 dao.insertRedemptions(archive.redemptions.map(BackupRedemptionRecord::toEntity))
                 dao.insertEvents(archive.events.map(BackupEventRecord::toEntity))
                 dao.insertProcessedCommands(archive.processedCommands.map(BackupProcessedCommandRecord::toEntity))
+                refundOutstandingWishDeposits(metadata.forSeed("import-refund"))
                 recordEvent(
                     metadata = metadata,
                     actorId = selectedProfileId,
@@ -1388,9 +1365,37 @@ class RoomFamilyQuestRepository(
         if (mutableSelectedProfileId.value != SEED_PROFILE_ID) return
         val migration = metadata.copy(idempotencyKey = DEFAULT_WISH_MIGRATION_KEY)
         processCommand(migration, OP_SEED_DATABASE) {
-            ensureDefaultWishGoal(SEED_PROFILE_ID, migration.forSeed("wish"), "CATALOG_MIGRATION", false)
+            ensureCoffeeReward(SEED_PROFILE_ID, migration.forSeed("wish"), false)
             OperationResult.Success
         }
+    }
+
+    private suspend fun refundLegacyWishDeposits(metadata: CommandMetadata) {
+        processCommand(metadata.copy(idempotencyKey = "wish-deposit-retirement-v056"), OP_SEED_DATABASE) {
+            refundOutstandingWishDeposits(metadata)
+            OperationResult.Success
+        }
+    }
+
+    private suspend fun refundOutstandingWishDeposits(metadata: CommandMetadata) {
+            dao.allProfiles().forEach { profile ->
+                val goal = dao.wishGoal(profile.id)
+                if (goal != null && goal.deposit > 0) {
+                    dao.insertLedgerEntry(LedgerEntryEntity(
+                        newId(), profile.id, goal.deposit, LedgerReason.WISH_GOAL_CLEARED.name,
+                        goal.rewardId, "Retired wish deposit refund", Clock.System.now().toEpochMilliseconds(),
+                    ))
+                    dao.upsertWishGoal(goal.copy(deposit = 0))
+                    recordEvent(
+                        metadata.forSeed("refund-${profile.id}"), profile.id, AggregateType.PROFILE,
+                        profile.id, EventType.WISH_GOAL_UPDATED,
+                        mapOf("profileId" to EventValue.Text(profile.id),
+                            "rewardId" to EventValue.Text(goal.rewardId),
+                            "deposit" to EventValue.Integer(0),
+                            "refundedDeposit" to EventValue.Integer(goal.deposit.toLong())),
+                    )
+                }
+            }
     }
 
     private suspend fun markSeedMigration(key: String, traceId: String) {
@@ -1399,10 +1404,9 @@ class RoomFamilyQuestRepository(
         )
     }
 
-    private suspend fun ensureDefaultWishGoal(
+    private suspend fun ensureCoffeeReward(
         profileId: String,
         metadata: CommandMetadata,
-        reason: String,
         restoreCanonicalReward: Boolean,
     ) {
         if (dao.wishGoal(profileId) != null && !restoreCanonicalReward) return
@@ -1449,21 +1453,7 @@ class RoomFamilyQuestRepository(
                 )
             }
         }
-        if (dao.wishGoal(profileId) != null) return
-        dao.upsertWishGoal(WishGoalEntity(profileId, DEFAULT_WISH_REWARD_ID, 0))
-        recordEvent(
-            metadata = metadata,
-            actorId = profileId,
-            aggregateType = AggregateType.PROFILE,
-            aggregateId = profileId,
-            eventType = EventType.WISH_GOAL_UPDATED,
-            payload = mapOf(
-                "profileId" to EventValue.Text(profileId),
-                "rewardId" to EventValue.Text(DEFAULT_WISH_REWARD_ID),
-                "deposit" to EventValue.Integer(0),
-                "reason" to EventValue.Text(reason),
-            ),
-        )
+        // Catalog recovery must not implicitly pin a goal.
     }
 
     private fun persistSelectedProfile(profileId: String) {
@@ -1509,7 +1499,6 @@ class RoomFamilyQuestRepository(
         const val SEED_CATALOG_VERSION = "v0.55"
         const val DEFAULT_WISH_REWARD_ID = "seed-reward-coffee"
         const val INITIAL_BALANCE = 120
-        const val WISH_GOAL_REDEEM_BONUS = 100
         const val INVENTORY_OWNED = "OWNED"
         const val INVENTORY_SOLD = "SOLD"
         const val INVENTORY_USED = "USED"

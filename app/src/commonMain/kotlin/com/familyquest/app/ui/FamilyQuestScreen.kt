@@ -205,6 +205,7 @@ fun FamilyQuestScreen(
                     coinPops = coinPops,
                     padding = padding,
                     onRecurrenceChange = { selectedRecurrence = it },
+                    onGoToStore = { section = MainSection.SHOP },
                     onToggle = viewModel::toggleTask,
                     onEdit = { taskEditor = it },
                     onAddRecurring = { recurrence ->
@@ -378,6 +379,7 @@ private fun TasksContent(
     coinPops: List<CoinPop>,
     padding: PaddingValues,
     onRecurrenceChange: (TaskRecurrence) -> Unit,
+    onGoToStore: () -> Unit,
     onToggle: (HabitTask) -> Unit,
     onEdit: (HabitTask) -> Unit,
     onAddRecurring: (TaskRecurrence) -> Unit,
@@ -420,7 +422,7 @@ private fun TasksContent(
             WishGoalCard(
                 state = state,
                 isPremium = isPremium,
-                onShowUpgradePrompt = onShowUpgradePrompt,
+                onShowUpgradePrompt = onGoToStore,
             )
         }
         item {
@@ -473,17 +475,17 @@ private fun WishGoalCard(
                     RoundedCornerShape(16.dp),
                 )
                 .dashedBorder(accent.copy(alpha = 0.40f), 12.dp)
-                .clickable(enabled = !isPremium, role = Role.Button, onClick = onShowUpgradePrompt)
+                .clickable(role = Role.Button, onClick = onShowUpgradePrompt)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(if (isPremium) "⭐" else "🔒", fontSize = 22.sp)
+            Text("⭐", fontSize = 22.sp)
             Text(
                 text = if (isPremium) {
                     "No wish goal set\nGo to Store and tap ⭐ to pin your goal here"
                 } else {
-                    "Wish Goal — Premium Feature\nUpgrade to Premium to pin a wish goal here"
+                    "No wish goal set\nGo to Store and tap ⭐ to pin Coffee here"
                 },
                 color = if (isPremium) Color(0xFF92400E) else accent.copy(alpha = 0.78f),
                 fontSize = 11.sp,
@@ -527,17 +529,6 @@ private fun WishGoalCard(
                     color = Color(0xFF78350F),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
-                )
-            }
-            if (goal.deposit > 0) {
-                Text(
-                    "🔒 ${goal.deposit}🪙",
-                    color = Color(0xFFB45309),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .background(CoinGold.copy(alpha = 0.20f), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 8.dp, vertical = 5.dp),
                 )
             }
         }
@@ -852,7 +843,9 @@ private fun RewardsContent(
     isPremium: Boolean,
     onShowPaywall: () -> Unit,
 ) {
-    val visibleRewards = if (isPremium) state.rewardOptions else state.rewardOptions.take(1)
+    val visibleRewards = if (isPremium) state.rewardOptions else state.rewardOptions.filter {
+        it.reward.id == "seed-reward-coffee"
+    }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -879,7 +872,7 @@ private fun RewardsContent(
                 isPremium = isPremium,
                 isWishGoal = state.wishGoalRewardId == option.reward.id,
                 onToggleWishGoal = {
-                    if (isPremium) {
+                    if (isPremium || option.reward.id == "seed-reward-coffee") {
                         onSetWishGoal(if (state.wishGoalRewardId == option.reward.id) null else option.reward.id)
                     } else {
                         onShowPaywall()
@@ -975,15 +968,6 @@ private fun RewardCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                if (option.wishDeposit > 0) {
-                    Text(
-                        "🔒 Deposit: ${option.wishDeposit}🪙 · +100 on redeem",
-                        color = CoinGold.copy(alpha = 0.75f),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                    )
-                }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
@@ -1018,7 +1002,7 @@ private fun RewardCard(
                     )
                 }
             }
-            if (isPremium) {
+            if (isPremium || reward.id == "seed-reward-coffee") {
                 IconButton(onClick = onToggleWishGoal, modifier = Modifier.size(30.dp)) {
                     Text(
                         "⭐",
@@ -1669,7 +1653,7 @@ private fun PremiumSheet(
                 )
                 Spacer(Modifier.height(18.dp))
                 Text(
-                    "🔒 Upgrade to QuestAndReward\nPremium",
+                    "🔒 Upgrade to QuestReward\nPremium",
                     color = Color.White,
                     fontSize = 20.sp,
                     lineHeight = 25.sp,

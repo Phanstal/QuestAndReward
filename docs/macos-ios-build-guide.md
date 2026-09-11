@@ -1,4 +1,6 @@
-# QuestAndReward macOS / iOS 编译指南
+# QuestReward macOS / iOS 编译指南
+
+v0.56 (20) 显示名为 QuestReward；工程、scheme、framework、仓库和 bundle ID 保持原名以兼容构建与升级。首次安装和重置后不自动 Pin Coffee；免费用户在 Store 仅可 Pin 已有 Coffee，但不能购买。Pin 不扣金币，兑换不赠送额外金币。旧 Deposit 在升级或导入时通过事务返还一次，历史账本不删除。
 
 本文用于在 macOS 上编译、测试、签名和归档 QuestAndReward iOS 应用。项目使用 Kotlin Multiplatform、Compose Multiplatform 和 Room KMP；业务规则、数据访问、ViewModel 与界面由 Android/iOS 共用，`iosApp` 只负责 SwiftUI 宿主和 Apple 工程配置。
 
@@ -140,7 +142,7 @@ xcodebuild test \
 2. Quests、Store、Rewards、Stats 四页均可切换，编辑抽屉和确认弹窗可操作。
 3. 新增、编辑、完成、软删除任务；每日/每周/每月周期和月度次数行为与 Android 一致。
 4. 免费态余额即使高于 Coffee 价格也保持 `Locked`；本地 StoreKit 购买后才可购买、编辑和新增。
-5. 购买、使用、出售奖励，心愿 Deposit、兑换和统计更新正确。
+5. 购买、使用、出售奖励，置顶不扣金币，心愿兑换不奖励额外金币；首次安装/重置心愿为空，免费用户仅可置顶 Coffee。旧押金退款与备份恢复保持账本一致。
 6. 杀掉并重启应用后 Room 数据仍存在，Premium 由 StoreKit entitlement 恢复。
 7. 在 Finder 或 Files 中确认应用 Documents 可见。`Export Backup` 写入 `quest-backup-*.json`；`Import Data` 打开系统 JSON 文件选择器，选择后执行完整校验与原子恢复，取消选择不修改数据。
 8. 在 Xcode Debug navigator 和设备日志中确认没有未捕获异常或数据库迁移失败。

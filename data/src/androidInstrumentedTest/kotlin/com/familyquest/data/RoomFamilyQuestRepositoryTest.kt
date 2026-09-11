@@ -71,8 +71,8 @@ class RoomFamilyQuestRepositoryTest {
         )
         assertEquals(3, repository.rewards.first().size)
         assertEquals(120, repository.observeBalance(profile.id).first())
-        assertEquals("seed-reward-coffee", repository.wishGoal.first()?.rewardId)
-        assertEquals(0, repository.wishGoal.first()?.deposit)
+        assertEquals(null, repository.wishGoal.first()?.rewardId)
+        assertEquals(null, repository.wishGoal.first()?.deposit)
         assertTrue(repository.observeInventory(profile.id).first().isEmpty())
         assertEquals(1, tasks.count { it.recurrence == TaskRecurrence.ONCE })
         assertEquals(8 * 60, tasks.single { it.id == "seed-daily-exercise" }.deadlineMinutes)
@@ -524,8 +524,8 @@ class RoomFamilyQuestRepositoryTest {
         assertTrue(repository.observeInventory(profileId).first().isEmpty())
         assertTrue(repository.rewards.first().any { it.id == reward.id })
         assertTrue(repository.rewards.first().any { it.id == "seed-reward-coffee" && it.active })
-        assertEquals("seed-reward-coffee", repository.wishGoal.first()?.rewardId)
-        assertEquals(0, repository.wishGoal.first()?.deposit)
+        assertEquals(null, repository.wishGoal.first()?.rewardId)
+        assertEquals(null, repository.wishGoal.first()?.deposit)
         assertTrue(repository.pendingEvents().size > eventsBeforeReset)
 
         val eventsAfterReset = repository.pendingEvents().size
@@ -583,6 +583,7 @@ class RoomFamilyQuestRepositoryTest {
         repository.ensureSeedData(metadata())
         val rewardId = "seed-reward-coffee"
 
+        assertEquals(OperationResult.Success, repository.setWishGoal(rewardId, metadata()))
         assertEquals(rewardId, repository.wishGoalRewardId.first())
 
         val recreated = RoomFamilyQuestRepository(
@@ -618,9 +619,9 @@ class RoomFamilyQuestRepositoryTest {
         restoreBeforeDefaultWishMigration()
 
         repository.ensureSeedData(metadata())
-        assertEquals("seed-reward-coffee", repository.wishGoal.first()?.rewardId)
+        assertEquals(null, repository.wishGoal.first()?.rewardId)
 
-        assertEquals(OperationResult.Success, repository.setWishGoal(null, metadata()))
+        assertEquals(OperationResult.NoChange, repository.setWishGoal(null, metadata()))
         val archive = repository.backupArchive(exportedAt = 1234)
         assertEquals(OperationResult.Success, repository.restoreBackup(archive, metadata()))
         repository.ensureSeedData(metadata())
@@ -638,7 +639,7 @@ class RoomFamilyQuestRepositoryTest {
 
         val profileId = repository.profiles.first().single().id
         assertTrue(repository.observeTasks(profileId).first().none { it.id == "seed-daily-exercise" })
-        assertEquals("seed-reward-coffee", repository.wishGoal.first()?.rewardId)
+        assertEquals(null, repository.wishGoal.first()?.rewardId)
     }
 
     private suspend fun restoreBeforeDefaultWishMigration() {
@@ -655,27 +656,27 @@ class RoomFamilyQuestRepositoryTest {
     }
 
     @Test
-    fun wishGoalDepositAllowsNegativeBalanceAndRedeemAddsBonusWithoutRefundOnClear() = runTest {
+    fun pinningIsFreeAndRedemptionHasNoBonus() = runTest {
         repository.ensureSeedData(metadata())
         val profileId = repository.profiles.first().single().id
         repository.addReward("Small treat", "", 50, null, "🎁", metadata())
         val reward = repository.rewards.first().single { it.name == "Small treat" }
 
         assertEquals(OperationResult.Success, repository.setWishGoal(reward.id, metadata()))
-        assertEquals(115, repository.observeBalance(profileId).first())
-        assertEquals(5, repository.wishGoal.first()?.deposit)
+        assertEquals(120, repository.observeBalance(profileId).first())
+        assertEquals(0, repository.wishGoal.first()?.deposit)
 
         assertEquals(OperationResult.Success, repository.redeemReward(reward.id, profileId, metadata()))
-        assertEquals(170, repository.observeBalance(profileId).first())
+        assertEquals(70, repository.observeBalance(profileId).first())
         assertEquals(null, repository.wishGoal.first())
         assertEquals(1, repository.observeInventory(profileId).first().count { it.rewardId == reward.id })
 
         repository.addReward("Expensive goal", "", 2_000, null, "🎧", metadata())
         val expensive = repository.rewards.first().single { it.name == "Expensive goal" }
         assertEquals(OperationResult.Success, repository.setWishGoal(expensive.id, metadata()))
-        assertEquals(-30, repository.observeBalance(profileId).first())
+        assertEquals(70, repository.observeBalance(profileId).first())
         assertEquals(OperationResult.Success, repository.setWishGoal(null, metadata()))
-        assertEquals(-30, repository.observeBalance(profileId).first())
+        assertEquals(70, repository.observeBalance(profileId).first())
     }
 
     @Test
@@ -684,7 +685,7 @@ class RoomFamilyQuestRepositoryTest {
         val profileId = repository.profiles.first().single().id
         val rewardId = repository.rewards.first().single { it.name == "Specialty Coffee" }.id
 
-        assertEquals(OperationResult.NoChange, repository.setWishGoal(rewardId, metadata()))
+        assertEquals(OperationResult.Success, repository.setWishGoal(rewardId, metadata()))
         assertEquals(
             OperationResult.Success,
             repository.markWishGoalReminderShown(profileId, "2026-09-03", metadata()),
@@ -783,6 +784,23 @@ class RoomFamilyQuestRepositoryTest {
             repository.restoreBackup(invalidArchive, metadata()),
         )
         assertEquals(liveRewardIds, repository.rewards.first().mapTo(mutableSetOf()) { it.id })
+    }
+
+    @Test
+    fun outstandingLegacyDepositIsRefundedOnceOnStartupAndBackupRestore() = runTest {
+        repository.ensureSeedData(metadata())
+        val profileId = repository.profiles.first().single().id
+        database.dao().upsertWishGoal(com.familyquest.data.db.WishGoalEntity(profileId, "seed-reward-coffee", 50))
+        val before = repository.observeBalance(profileId).first()
+        repository.ensureSeedData(metadata())
+        assertEquals(before + 50, repository.observeBalance(profileId).first())
+        assertEquals(0, repository.wishGoal.first()?.deposit)
+        repository.ensureSeedData(metadata())
+        assertEquals(before + 50, repository.observeBalance(profileId).first())
+        val archive = repository.backupArchive(1234).copy(wishGoalDeposit = 25)
+        assertEquals(OperationResult.Success, repository.restoreBackup(archive, metadata()))
+        assertEquals(before + 75, repository.observeBalance(profileId).first())
+        assertEquals(0, repository.wishGoal.first()?.deposit)
     }
 
     private fun metadata(): CommandMetadata {

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       preview_release:
-        description: Build and publish v0.55 prerelease for manual testing without full acceptance
+        description: Build and publish v0.56 prerelease for manual testing without full acceptance
         type: boolean
         default: false
   push:
@@ -200,22 +200,22 @@ jobs:
 
           plutil -lint "$plist"
           test "$(plutil -extract CFBundleIdentifier raw "$plist")" = "com.phanstal.questandreward"
-          test "$(plutil -extract CFBundleShortVersionString raw "$plist")" = "0.55"
-          test "$(plutil -extract CFBundleVersion raw "$plist")" = "19"
+          test "$(plutil -extract CFBundleShortVersionString raw "$plist")" = "0.56"
+          test "$(plutil -extract CFBundleVersion raw "$plist")" = "20"
           test "$(plutil -extract CFBundleExecutable raw "$plist")" = "QuestAndReward"
           test "$(plutil -extract CFBundlePackageType raw "$plist")" = "APPL"
           test "$(plutil -extract CADisableMinimumFrameDurationOnPhone raw "$plist")" = "true"
 
           ditto -c -k --sequesterRsrc --keepParent \
             "$app" \
-            "$GITHUB_WORKSPACE/build/QuestAndReward-v0.55-ios-simulator.zip"
-          shasum -a 256 "$GITHUB_WORKSPACE/build/QuestAndReward-v0.55-ios-simulator.zip"
+            "$GITHUB_WORKSPACE/build/QuestReward-v0.56-ios-simulator.zip"
+          shasum -a 256 "$GITHUB_WORKSPACE/build/QuestReward-v0.56-ios-simulator.zip"
 
       - name: Upload Simulator app
         uses: actions/upload-artifact@v4
         with:
-          name: QuestAndReward-v0.55-iOS-Simulator
-          path: build/QuestAndReward-v0.55-ios-simulator.zip
+          name: QuestReward-v0.56-iOS-Simulator
+          path: build/QuestReward-v0.56-ios-simulator.zip
           if-no-files-found: error
 
       - name: Publish manual-testing prerelease
@@ -224,11 +224,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh release create v0.55 \
-            "$GITHUB_WORKSPACE/build/QuestAndReward-v0.55-ios-simulator.zip" \
+          gh release create v0.56 \
+            "$GITHUB_WORKSPACE/build/QuestReward-v0.56-ios-simulator.zip" \
             --target "$GITHUB_SHA" --prerelease \
-            --title "v0.55 Preview — manual simulator testing" \
-            --notes "Manual-testing prerelease, not a completed acceptance release. Includes the Compose startup Info.plist fix missing from v0.54. Version 0.55 (19), universal arm64/x86_64 iOS Simulator app, not an IPA. This run builds, installs and cold-launches the packaged app; full StoreKit/UI acceptance and signed device Archive are not run in preview mode. Full UI acceptance remains incomplete. StoreKit simulation requires the source project and its StoreKit configuration in Xcode. Source: $GITHUB_SHA. Build evidence: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            --title "v0.56 Preview — manual simulator testing" \
+            --notes "QuestReward 0.56 (20) manual-testing prerelease, not a completed acceptance release. Empty initial wish, free Coffee-only Pin, no Deposit or wish redemption bonus. Universal arm64/x86_64 iOS Simulator app, not an IPA. Preview mode builds, installs and cold-launches the packaged app but skips full StoreKit/UI acceptance and device Archive. StoreKit simulation requires the source project and its StoreKit configuration in Xcode. Source: $GITHUB_SHA. Build evidence: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
       - name: Export iOS test evidence
         if: always()
