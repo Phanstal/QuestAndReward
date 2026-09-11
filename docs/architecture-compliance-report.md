@@ -2,6 +2,10 @@
 
 ## 当前候选：QuestReward v0.56 (20)，2026-09-11
 
+### iOS 首次验收修复静态门禁
+
+34601867758：KMP 通过，StoreKit 9/9 通过，UI 1 项在首次 Pin 后的余额断言失败。实际截图显示每日提醒覆盖 Store，提醒显示 120 / 500、380 to go，背景余额为 120。✅ 本轮仅调整 XCUITest：先断言提醒余额与差额、关闭 Got it，再检查背景余额与已 Pin 状态；不删除余额断言、不改生产行为、不扩大超时或跳过测试。五项架构维度与事务/事件兼容结论不变，Android APK 未变化。静态门禁完成后重新运行完整 iOS CI；新版 UI 验收尚未通过。
+
 本轮按 `architecture-spec.md` 完成静态检查后执行测试。✅ 可靠性：Pin 和旧押金退款复用命令超时、幂等键、Room 原子事务；导入退款也处于恢复事务中。✅ 扩展性：不新增平台业务实现或公共 API。✅ 可维护性：沿用 traceId 和兼容事件，私有 Coffee 恢复函数改为描述真实用途的名称。✅ 分层：共享 Compose 经 ViewModel/Application 调用，免费态只展示和 Pin seed Coffee，仍禁止购买。✅ 复用：沿用 wish goal、ledger、processed commands 和备份格式，未创建重复基础模块。Room v8、事件 v1、备份 v3 和应用技术标识不变。
 
 新装及重置为空愿望；取消 Deposit 与兑换赠币；存量未结算 Deposit 通过账本返还一次，已有目标和历史保留。测试已取得 JVM 成功、Room 31/31、Compose 21/21；最终清理后的重跑、Lint、APK 与 iOS CI 尚待验证。以下 v0.55 内容为历史验收记录，不代表 v0.56 已通过 iOS 验收。

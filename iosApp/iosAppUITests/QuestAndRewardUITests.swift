@@ -41,6 +41,11 @@ final class QuestAndRewardUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "No wish goal set")).firstMatch.waitForExistence(timeout: 20))
         tap(app, "Store")
         tapLabel(app, "Set Specialty Coffee as wish goal")
+        // Pinning the first goal immediately opens a modal; its background is
+        // intentionally absent from the accessibility tree until dismissed.
+        XCTAssertTrue(app.staticTexts["120 / 500 🪙"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["380🪙 to go"].exists)
+        tap(app, "Got it")
         XCTAssertTrue(app.staticTexts["120"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Remove Specialty Coffee wish goal")).firstMatch.waitForExistence(timeout: 10))
         tap(app, "Quests")
