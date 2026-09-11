@@ -289,7 +289,19 @@ final class QuestAndRewardUITests: XCTestCase {
         let oldValue = field.label
         if !oldValue.isEmpty {
             field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
-            app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count))
+            // A batched delete burst can outrun Compose's iOS text updates.
+            // Observe each deletion before sending the next key, with a fixed
+            // bound; never append replacement text to an uncleared value.
+            for _ in 0..<oldValue.count {
+                let before = field.label
+                if before.isEmpty { break }
+                app.typeText(XCUIKeyboardKey.delete.rawValue)
+                let deletion = XCTNSPredicateExpectation(
+                    predicate: NSPredicate { _, _ in field.label == String(before.dropLast()) },
+                    object: field
+                )
+                XCTAssertEqual(XCTWaiter.wait(for: [deletion], timeout: 10), .completed, app.debugDescription)
+            }
             let cleared = XCTNSPredicateExpectation(
                 predicate: NSPredicate { _, _ in field.label.isEmpty }, object: field
             )
