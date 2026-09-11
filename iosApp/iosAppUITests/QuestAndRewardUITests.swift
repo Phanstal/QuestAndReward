@@ -36,7 +36,16 @@ final class QuestAndRewardUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Level Up Your Life"].waitForExistence(timeout: 20))
         tap(app, "Start Exploring")
         XCTAssertTrue(app.staticTexts["Skip"].waitForExistence(timeout: 5))
-        tap(app, "Skip")
+        // Use the actual button frame, not the nested virtual StaticText's
+        // inferred hit point (which can land on another onboarding control).
+        let skip = app.buttons["first-run-skip"]
+        XCTAssertTrue(skip.waitForExistence(timeout: 10), app.debugDescription)
+        XCTAssertTrue(app.frame.contains(skip.frame), app.debugDescription)
+        skip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let onboardingClosed = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == false"), object: skip
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [onboardingClosed], timeout: 10), .completed, app.debugDescription)
 
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "No wish goal set")).firstMatch.waitForExistence(timeout: 20))
         tap(app, "Store")
