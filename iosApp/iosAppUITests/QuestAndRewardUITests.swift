@@ -184,8 +184,10 @@ final class QuestAndRewardUITests: XCTestCase {
         tap(app, "Reset Anyway")
         if app.staticTexts["Got it"].waitForExistence(timeout: 5) { tap(app, "Got it") }
         tap(app, "📤 Import Data", scroll: true)
-        let backupFile = app.cells.matching(NSPredicate(format: "label BEGINSWITH %@", "quest-backup-")).firstMatch
-        XCTAssertTrue(backupFile.waitForExistence(timeout: 15), app.debugDescription)
+        let backupFile = app.cells.matching(NSPredicate(format: "identifier BEGINSWITH %@", "quest-backup-")).firstMatch
+        // Files' first directory enumeration can finish after the sheet appears.
+        // Wait for the real exported file, not just the picker presentation.
+        XCTAssertTrue(backupFile.waitForExistence(timeout: 30), app.debugDescription)
         XCTAssertTrue(backupFile.isEnabled)
         // Files exposes the filename separately from the activatable file tile.
         // Tap its thumbnail and require successful restore before leaving Stats.
