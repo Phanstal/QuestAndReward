@@ -1,5 +1,9 @@
 # QuestReward
 
+## v0.56 已验证交付
+
+[v0.56 测试版下载](https://github.com/Phanstal/QuestAndReward/releases/tag/v0.56)：Android APK 和双架构 iOS Simulator ZIP。[完整 CI 34612008991](https://github.com/Phanstal/QuestAndReward/actions/runs/34612008991) 已通过 KMP、StoreKit 9 项、完整 UI 流程、无签名设备 Archive、双架构构建与冷启动。Android Room 31 项、Compose 21 项、JVM、Lint（0 错误 / 43 警告）及 APK 验证通过。文件哈希与范围见 [发布记录](docs/releases/v0.56.md)。Simulator ZIP 不是 IPA，仍未完成真机/TestFlight/App Store 上线验收。
+
 一个同时支持 Android 和 iOS 的本地优先游戏化任务与奖励应用。项目使用 Kotlin Multiplatform、Compose Multiplatform 和 Room KMP，共享业务规则、数据层、ViewModel 与界面；平台工程负责启动、文件访问、系统偏好与订阅适配。
 
 当前开发版本为 `v0.56`（Android/iOS build 20），Room 数据库版本为 `v8`。品牌显示为 QuestReward；仓库、工程路径、包标识与订阅产品 ID 保留，支持原安装覆盖升级。
