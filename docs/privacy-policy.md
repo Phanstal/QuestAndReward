@@ -1,8 +1,8 @@
-# QuestAndReward Privacy Policy
+# QuestReward Privacy Policy
 
 Effective date: September 8, 2026
 
-QuestAndReward stores your quests, rewards, wish goals, coin history and app preferences locally on your device. You do not need to create a QuestAndReward account. The current app does not include advertising, third-party analytics, or an automatic developer-operated synchronization service.
+QuestReward stores your quests, rewards, wish goals, coin history and app preferences locally on your device. You do not need to create a QuestReward account. The current app does not include advertising, third-party analytics, or an automatic developer-operated synchronization service.
 
 ## Purchases
 
@@ -22,4 +22,4 @@ Opening a policy, support or terms link uses your browser and contacts the websi
 
 ## Contact and changes
 
-For privacy questions, contact the QuestAndReward maintainer through the [project's issue tracker](https://github.com/Phanstal/QuestAndReward/issues), without including sensitive personal information. Changes to the app's data handling will be reflected in this policy before release.
+For privacy questions, contact the QuestReward maintainer through the [project's issue tracker](https://github.com/Phanstal/QuestAndReward/issues), without including sensitive personal information. Changes to the app's data handling will be reflected in this policy before release.
